@@ -4,7 +4,7 @@
     "CLAUDE_OBSERVE_SERVER": "http://localhost:4000",
     "CLAUDE_OBSERVE_PROJECT_NAME": "my-project-name"
   },
-  "teammateMode": "in-process",
+  "teammateMode": "tmux",
   "statusLine": {
     "type": "command",
     "command": "uv run $CLAUDE_PROJECT_DIR/.claude/status_lines/status_line_v6.py",
