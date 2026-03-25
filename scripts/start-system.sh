@@ -66,6 +66,5 @@ echo -e "Server API: ${GREEN}http://localhost:$SERVER_PORT${NC}"
 echo -e "WebSocket:  ${GREEN}ws://localhost:$SERVER_PORT/stream${NC}"
 echo -e "Data dir:   ${GREEN}$PROJECT_ROOT/data${NC}"
 echo
-echo -e "To view logs:        ${YELLOW}docker compose logs -f${NC}"
-echo -e "To stop the system:  ${YELLOW}./scripts/reset-system.sh${NC}"
-echo -e "To test the system:  ${YELLOW}./scripts/test-system.sh${NC}"
+echo -e "To view logs:        ${YELLOW}just logs${NC}"
+echo -e "To stop the system:  ${YELLOW}just stop${NC}"

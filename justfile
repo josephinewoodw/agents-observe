@@ -16,8 +16,9 @@ default:
 
 # Start the system (detached)
 start:
-    mkdir -p {{project_root}}/data
-    cd {{project_root}} && SERVER_PORT={{server_port}} CLIENT_PORT={{client_port}} docker compose up -d --build
+    ./scripts/start-system.sh
+    # mkdir -p {{project_root}}/data
+    # cd {{project_root}} && SERVER_PORT={{server_port}} CLIENT_PORT={{client_port}} docker compose up -d --build
 
 # Stop the system and reset the database
 stop:
