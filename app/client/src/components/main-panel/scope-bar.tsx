@@ -27,12 +27,18 @@ export function ScopeBar() {
       ? allAgents.filter((a) => selectedAgentIds.includes(a.id))
       : allAgents
 
+  const sortedAgents = [...visibleAgents].sort((a, b) => {
+    if (a.status === 'active' && b.status !== 'active') return -1
+    if (a.status !== 'active' && b.status === 'active') return 1
+    return 0
+  })
+
   return (
     <div className="flex items-center gap-2 px-3 py-2 border-b border-border min-h-[40px] flex-wrap">
       <span className="text-xs text-muted-foreground">Agents:</span>
 
       <div className="flex items-center gap-1 flex-wrap">
-        {visibleAgents.map((agent) => {
+        {sortedAgents.map((agent) => {
           const isSubagent = agent.parentAgentId !== null
           const isSelected = selectedAgentIds.includes(agent.id)
           return (
@@ -68,7 +74,7 @@ export function ScopeBar() {
             </Badge>
           )
         })}
-        {visibleAgents.length === 0 && (
+        {sortedAgents.length === 0 && (
           <span className="text-xs text-muted-foreground/60">No agents</span>
         )}
       </div>
