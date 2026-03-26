@@ -141,43 +141,38 @@ function ToolDetail({
   switch (event.toolName) {
     case 'Bash':
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value={`Bash — ${ti.description || ''}`} />
+        <div className="space-y-1.5">
           {ti.command && <DetailCode label="Command" value={ti.command} />}
           {result && <DetailCode label="Result" value={formatResult(result)} />}
         </div>
       );
     case 'Read':
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value="Read" />
+        <div className="space-y-1.5">
           <DetailRow label="File" value={relPath(ti.file_path, cwd)} />
-          {ti.offset && <DetailRow label="Offset" value={`line ${ti.offset}${ti.limit ? `, limit ${ti.limit}` : ''}`} />}
+          {ti.offset && <DetailRow label="Range" value={`line ${ti.offset}${ti.limit ? `, limit ${ti.limit}` : ''}`} />}
           {result && <DetailCode label="Content" value={formatResult(result)} />}
         </div>
       );
     case 'Write':
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value="Write" />
+        <div className="space-y-1.5">
           <DetailRow label="File" value={relPath(ti.file_path, cwd)} />
-          {result && <DetailRow label="Result" value={formatResult(result)} />}
+          {result && <DetailCode label="Result" value={formatResult(result)} />}
         </div>
       );
     case 'Edit':
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value="Edit" />
+        <div className="space-y-1.5">
           <DetailRow label="File" value={relPath(ti.file_path, cwd)} />
           {ti.old_string && <DetailCode label="Old" value={ti.old_string} />}
           {ti.new_string && <DetailCode label="New" value={ti.new_string} />}
-          {result && <DetailRow label="Result" value={formatResult(result)} />}
+          {result && <DetailCode label="Result" value={formatResult(result)} />}
         </div>
       );
     case 'Grep':
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value="Grep" />
+        <div className="space-y-1.5">
           <DetailRow label="Pattern" value={`/${ti.pattern}/`} />
           {ti.path && <DetailRow label="Path" value={relPath(ti.path, cwd)} />}
           {ti.glob && <DetailRow label="Glob" value={ti.glob} />}
@@ -186,8 +181,7 @@ function ToolDetail({
       );
     case 'Glob':
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value="Glob" />
+        <div className="space-y-1.5">
           <DetailRow label="Pattern" value={ti.pattern} />
           {ti.path && <DetailRow label="Path" value={relPath(ti.path, cwd)} />}
           {result && <DetailCode label="Result" value={formatResult(result)} />}
@@ -195,17 +189,15 @@ function ToolDetail({
       );
     case 'Agent':
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value="Agent" />
-          {ti.description && <DetailRow label="Description" value={ti.description} />}
+        <div className="space-y-1.5">
+          {ti.description && <DetailRow label="Task" value={ti.description} />}
           {ti.prompt && <DetailCode label="Prompt" value={ti.prompt} />}
           {result && <DetailCode label="Result" value={formatResult(result)} />}
         </div>
       );
     default:
       return (
-        <div className="space-y-1">
-          <DetailRow label="Tool" value={event.toolName || 'Unknown'} />
+        <div className="space-y-1.5">
           {ti.description && <DetailRow label="Description" value={ti.description} />}
           {result && <DetailCode label="Result" value={formatResult(result)} />}
         </div>
@@ -228,9 +220,9 @@ function DetailRow({ label, value, multiline }: { label: string; value?: string;
 function DetailCode({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
   return (
-    <div className="space-y-0.5">
-      <span className="text-muted-foreground">{label}:</span>
-      <pre className="overflow-x-auto rounded bg-muted/50 p-1.5 font-mono text-[10px] leading-relaxed max-h-40 overflow-y-auto">
+    <div className="flex gap-2">
+      <span className="text-muted-foreground shrink-0 w-20 text-right">{label}:</span>
+      <pre className="overflow-x-auto rounded bg-muted/50 p-1.5 font-mono text-[10px] leading-relaxed max-h-40 overflow-y-auto flex-1 min-w-0">
         {value}
       </pre>
     </div>
