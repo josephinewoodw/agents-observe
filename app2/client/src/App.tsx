@@ -1,5 +1,6 @@
 import { ThemeProvider } from '@/components/theme-provider';
 import { Sidebar } from '@/components/sidebar/sidebar';
+import { MainPanel } from '@/components/main-panel/main-panel';
 import { useWebSocket } from '@/hooks/use-websocket';
 
 export function App() {
@@ -9,11 +10,7 @@ export function App() {
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden bg-background text-foreground">
         <Sidebar connected={connected} />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            Select a project to get started
-          </div>
-        </main>
+        <MainPanel />
       </div>
     </ThemeProvider>
   );
