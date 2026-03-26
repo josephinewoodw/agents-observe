@@ -1,4 +1,4 @@
-# Claude Observe - Multi-Agent Observability
+# Claude Observe
 # Usage: just <recipe>
 
 set dotenv-load
@@ -65,8 +65,8 @@ dev-server:
 dev-client:
     cd {{client}} && npm run dev
 
-# Build the client for production
-build:
+# Build the client for production - not needed if using docker
+dev-client-build:
     cd {{client}} && npm run build
 
 # ─── Testing ────────────────────────────────────────────

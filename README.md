@@ -27,7 +27,7 @@ This matters because:
 ## Architecture
 
 ```
-Claude Code Hooks  →  send_event.mjs  →  Bun Server (SQLite)  →  React Dashboard
+Claude Code Hooks  →  send_event.mjs  →  API Server (SQLite)  →  React Dashboard
     (dumb pipe)         (HTTP POST)        (parse + store)        (WebSocket live)
 ```
 
@@ -35,7 +35,6 @@ The hook script is a dumb pipe — it reads the raw event from stdin, adds the p
 
 ## Prerequisites
 
-- [Bun](https://bun.sh/) (for the server)
 - [Node.js](https://nodejs.org/) (for the client and hook script)
 - [just](https://github.com/casey/just) (optional, for convenience commands)
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
@@ -45,15 +44,18 @@ The hook script is a dumb pipe — it reads the raw event from stdin, adds the p
 ### 1. Clone and install dependencies
 
 ```bash
-git clone <repo-url> claude-observe
+git clone https://github.com/simple10/claude-observe.git claude-observe
 cd claude-observe
 
-# Server
-cd app/server && bun install && cd ../..
+# For local dev
+just install
+just dev
 
-# Client
-cd app/client && npm install && cd ../..
+# Or start as a docker container
+just start
 ```
+
+See [justfile](./justfile) for additional commands.
 
 ### 2. Configure Claude Code hooks
 
@@ -102,29 +104,7 @@ Add the following to your settings file:
 | `CLAUDE_OBSERVE_EVENTS_ENDPOINT` | `http://127.0.0.1:4001/api/events` | Full URL for the events endpoint |
 | `CLAUDE_OBSERVE_HOOK_SCRIPT` | (required) | Absolute path to `app/hooks/send_event.mjs` |
 
-### 3. Start the dashboard
-
-**With just (recommended):**
-
-```bash
-# Start server + client locally
-just dev-local
-
-# Or with Docker
-just start
-```
-
-**Without just:**
-
-```bash
-# Terminal 1: Server
-cd app/server && bun src/index.ts
-
-# Terminal 2: Client
-cd app/client && npm run dev
-```
-
-### 4. Open the dashboard
+### 3. Open the dashboard
 
 Navigate to **<http://localhost:5174>** (dev) or **<http://localhost:4001>** (Docker).
 
@@ -134,27 +114,30 @@ Start a Claude Code session in your configured project. Events will stream into 
 
 If you have [just](https://github.com/casey/just) installed:
 
-```
-just dev-local    # Start server + client locally (no Docker)
+```bash
+just install      # Install all dependencies
+just dev          # Start server + client in dev mode (hot reload)
 just dev-server   # Start only the server
 just dev-client   # Start only the client
-just start        # Start with Docker (detached)
-just dev          # Start with Docker + hot reload
+just start        # Start production containers (Docker, detached)
 just stop         # Stop Docker containers
+just restart      # Restart Docker containers
 just logs         # Follow Docker container logs
 just test         # Run server tests
+just test-watch   # Run server tests in watch mode
 just test-event   # Send a test event to the server
-just health       # Check if server and client are running
+just health       # Check server health
 just db-reset     # Delete the events database
-just open         # Open the dashboard in your browser
+just open         # Open the dashboard in browser
+just fmt          # Format all source files
 ```
 
 ## Project structure
 
-```
+```text
 app/
   hooks/send_event.mjs    # Hook script — dumb pipe, forwards raw events
-  server/                 # Bun server — parses events, SQLite, WebSocket
+  server/                 # Node server — parses events, SQLite, WebSocket
     src/
       index.ts            # HTTP routes + WebSocket
       db.ts               # SQLite schema + queries
@@ -183,6 +166,16 @@ app/
 **Server** receives raw events, extracts structural fields (type, tool name, agent ID), builds the agent hierarchy (parent → subagent relationships), stores everything in SQLite, and broadcasts new events to WebSocket clients. The server is the single source of truth — no formatting, no truncation, just raw data with structural indexes.
 
 **Client** fetches data via REST API, receives real-time updates via WebSocket, and handles all display logic (summaries, truncation, deduplication, filtering). Tool events are deduped client-side (PreToolUse + PostToolUse merged into a single row). The emoji icon mapping and summary generation are editable config files.
+
+### Dev vs Production
+
+In dev mode, the client and server run as separate processes with separate ports.
+
+In production or docker mode, the client is bundled and served by the server. Both the API and dashboard are served from the same process and port.
+
+## Acknowledgements
+
+This project was heavily inspired by [disler's Multi-Agent Observability System](https://github.com/disler/claude-code-hooks-multi-agent-observability).
 
 ## License
 

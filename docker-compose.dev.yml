@@ -1,7 +1,0 @@
-services:
-  claude-observe:
-    volumes:
-      - ./data:/data
-      - ./app/server/src:/app/server/src
-    working_dir: /app/server
-    command: npx tsx watch src/index.ts
