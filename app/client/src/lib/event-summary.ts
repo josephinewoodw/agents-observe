@@ -102,11 +102,16 @@ function getStopSummary(event: ParsedEvent, allEvents?: ParsedEvent[]): string {
   }
 
   const parts: string[] = [];
-  if (prompt) parts.push(`Prompt: "${prompt}"`);
-  if (lastMsg) parts.push(`Final: "${lastMsg}"`);
+  if (prompt) parts.push(`Prompt: "${oneLine(prompt)}"`);
+  if (lastMsg) parts.push(`Final: "${oneLine(lastMsg)}"`);
 
   if (parts.length > 0) return parts.join('\n');
   return 'Session stopped';
+}
+
+// Collapse newlines/whitespace into a single line
+function oneLine(s: string): string {
+  return s.replace(/\s*\n\s*/g, ' ').trim();
 }
 
 // Strip cwd prefix to show relative paths
