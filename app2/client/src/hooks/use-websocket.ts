@@ -7,7 +7,7 @@ export function useWebSocket() {
   const queryClient = useQueryClient();
   const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     function connect() {
