@@ -91,6 +91,11 @@ export function ProjectList({ collapsed }: ProjectListProps) {
   );
 }
 
+function shortenCwd(cwd: string): string {
+  // Replace /Users/<name> or /home/<name> with ~
+  return cwd.replace(/^\/(?:Users|home)\/[^/]+/, '~');
+}
+
 function SessionList({ projectId }: { projectId: string }) {
   const { data: sessions } = useSessions(projectId);
   const { selectedSessionId, setSelectedSessionId } = useUIStore();
@@ -104,34 +109,41 @@ function SessionList({ projectId }: { projectId: string }) {
       {sessions.map((session) => {
         const isSelected = selectedSessionId === session.id;
         const label = session.slug || session.id.slice(0, 8);
+        const cwd = typeof session.metadata?.cwd === 'string' ? session.metadata.cwd : null;
 
         return (
-          <button
-            key={session.id}
-            className={cn(
-              'flex items-center gap-1.5 w-full rounded-md px-2 py-1 text-xs transition-colors',
-              isSelected
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-            )}
-            onClick={() => setSelectedSessionId(isSelected ? null : session.id)}
-          >
-            <span
+          <div key={session.id}>
+            <button
               className={cn(
-                'h-2 w-2 shrink-0 rounded-full',
-                session.status === 'active' ? 'bg-green-500' : 'bg-muted-foreground/40'
+                'flex items-center gap-1.5 w-full rounded-md px-2 py-1 text-xs transition-colors',
+                isSelected
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
               )}
-            />
-            <span className="truncate">{label}</span>
-            <span className="text-[10px] text-muted-foreground/60 ml-auto shrink-0">
-              {formatRelativeTime(session.startedAt)}
-            </span>
-            {session.eventCount != null && (
-              <Badge variant="outline" className="text-[9px] h-3.5 px-1 shrink-0">
-                {session.eventCount}
-              </Badge>
+              onClick={() => setSelectedSessionId(isSelected ? null : session.id)}
+            >
+              <span
+                className={cn(
+                  'h-2 w-2 shrink-0 rounded-full',
+                  session.status === 'active' ? 'bg-green-500' : 'bg-muted-foreground/40'
+                )}
+              />
+              <span className="truncate">{label}</span>
+              <span className="text-[10px] text-muted-foreground/60 ml-auto shrink-0">
+                {formatRelativeTime(session.startedAt)}
+              </span>
+              {session.eventCount != null && (
+                <Badge variant="outline" className="text-[9px] h-3.5 px-1 shrink-0">
+                  {session.eventCount}
+                </Badge>
+              )}
+            </button>
+            {cwd && (
+              <div className="px-2 pb-0.5 text-[10px] text-muted-foreground/50 truncate">
+                {shortenCwd(cwd)}
+              </div>
             )}
-          </button>
+          </div>
         );
       })}
     </div>
