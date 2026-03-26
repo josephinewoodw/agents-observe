@@ -2,6 +2,13 @@
 
 Real-time observability for Claude Code agents.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/simple10/claude-observe/main/docs/assets/dashboard2.png
+" alt="Claude Observe Dashboard Screenshot" />
+  <img src="https://raw.githubusercontent.com/simple10/claude-observe/main/docs/assets/dashboard1.png
+" alt="Claude Observe Dashboard Screenshot" />
+</p>
+
 ## Why observability matters
 
 When Claude Code runs autonomously — spawning subagents, calling tools, reading files, executing commands — you have no visibility into what's actually happening. The terminal shows a fraction of the activity. Subagents are invisible. Tool calls blur together. And when something goes wrong three agents deep in a parallel execution, you're left reading through logs after the fact.
