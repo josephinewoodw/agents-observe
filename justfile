@@ -45,13 +45,17 @@ logs:
 
 # Start server + client in dev mode (hot reload)
 dev:
-    @echo "Starting dev server + client..."
-    @echo "Server: http://localhost:{{port}}"
-    @echo "Client: http://localhost:5174 (Vite dev)"
-    @echo ""
+    #!/usr/bin/env bash
+    echo "Starting dev server + client..."
+    echo "Server: http://localhost:{{port}}"
+    echo "Client: http://localhost:5174 (Vite dev)"
+    echo ""
     cd {{server}} && npm run dev &
+    pid1=$!
     cd {{client}} && npm run dev &
-    @wait
+    pid2=$!
+    trap 'kill $pid1 $pid2 2>/dev/null; wait $pid1 $pid2 2>/dev/null; exit 0' INT TERM
+    wait
 
 # Start only the server (dev mode with hot reload)
 dev-server:
