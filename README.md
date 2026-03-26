@@ -3,12 +3,10 @@
 Real-time observability for Claude Code agents.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/simple10/claude-observe/main/docs/assets/dashboard2.png
-" alt="Claude Observe Dashboard Screenshot" />
+  <img src="https://raw.githubusercontent.com/simple10/claude-observe/main/docs/assets/dashboard2.png" alt="Claude Observe Dashboard Screenshot" />
 </p>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/simple10/claude-observe/main/docs/assets/dashboard1.png
-" alt="Claude Observe Dashboard Screenshot" />
+  <img src="https://raw.githubusercontent.com/simple10/claude-observe/main/docs/assets/dashboard1.png" alt="Claude Observe Dashboard Screenshot" />
 </p>
 
 ## Why observability matters
