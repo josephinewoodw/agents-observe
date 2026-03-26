@@ -16,12 +16,11 @@ default:
 
 # Start the system (detached)
 start:
-    ./scripts/start-system.sh
+    cd {{project_root}} && ./scripts/start-system.sh
 
 # Stop the system and reset the database
 stop:
     cd {{project_root}} && docker compose down
-    just db-reset
 
 # Restart the system
 restart: stop start
