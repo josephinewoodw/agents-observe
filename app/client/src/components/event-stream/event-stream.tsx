@@ -7,8 +7,15 @@ import { EventRow } from './event-row'
 import type { Agent, ParsedEvent } from '@/types'
 
 export function EventStream() {
-  const { selectedProjectId, selectedSessionId, selectedAgentIds, activeEventTypes, searchQuery } =
-    useUIStore()
+  const {
+    selectedProjectId,
+    selectedSessionId,
+    selectedAgentIds,
+    activeEventTypes,
+    searchQuery,
+    autoFollow,
+    setAutoFollow,
+  } = useUIStore()
 
   const { data: sessions } = useSessions(selectedProjectId)
   const effectiveSessionId = selectedSessionId || sessions?.[0]?.id || null
@@ -75,12 +82,12 @@ export function EventStream() {
   const showAgentLabel = agentMap.size > 1
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when session changes or first load
+  // Auto-scroll to bottom when session changes or new events arrive (if autoFollow is enabled)
   useEffect(() => {
-    if (scrollRef.current && filteredEvents.length > 0) {
+    if (autoFollow && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [effectiveSessionId])
+  }, [autoFollow, filteredEvents.length])
 
   if (!effectiveSessionId) {
     return (

@@ -52,14 +52,14 @@ export function EventDetail({ event }: EventDetailProps) {
       {/* Per-event-type rich detail */}
       <ToolDetail event={event} payload={p} postPayload={postPayload} cwd={cwd} />
 
-      {/* Conversation thread for UserPrompt / Stop events */}
+      {/* Conversation thread for UserPrompt / Stop / SubagentStop events */}
       {showThread && (
         <div>
           <div className="text-muted-foreground mb-1.5 font-medium">Conversation thread:</div>
           {loadingThread && <div className="text-muted-foreground/60 py-2">Loading thread...</div>}
           {thread && thread.length > 0 && (
             <div className="space-y-0.5 rounded border border-border/50 bg-muted/20 p-1.5">
-              {thread.map((e) => (
+              {dedupeThread(thread).map((e) => (
                 <ThreadEvent key={e.id} event={e} isCurrentEvent={e.id === event.id} />
               ))}
             </div>

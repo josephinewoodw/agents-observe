@@ -50,6 +50,10 @@ interface UIState {
   scrollToEventId: number | null
   toggleExpandedEvent: (id: number) => void
   setScrollToEventId: (id: number | null) => void
+
+  // Auto-follow
+  autoFollow: boolean
+  setAutoFollow: (enabled: boolean) => void
 }
 
 const { projectId: initialProjectId, sessionId: initialSessionId } = parseHash()
@@ -107,6 +111,9 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { expandedEventIds: next }
     }),
   setScrollToEventId: (id) => set({ scrollToEventId: id }),
+
+  autoFollow: true,
+  setAutoFollow: (enabled) => set({ autoFollow: enabled }),
 }))
 
 if (typeof window !== 'undefined') {

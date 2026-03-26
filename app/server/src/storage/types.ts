@@ -66,5 +66,5 @@ export interface EventStore {
   getEventsForAgent(agentId: string): Promise<StoredEvent[]>
   getThreadForEvent(eventId: number): Promise<StoredEvent[]>
   getEventsSince(sessionId: string, sinceTimestamp: number): Promise<StoredEvent[]>
-  clearAllData(): Promise<void>
+  clearSessionEvents(sessionId: string): Promise<void>
 }
