@@ -104,7 +104,8 @@ function ToolDetail({
   cwd?: string;
 }) {
   const ti = payload.tool_input || {};
-  const result = postPayload?.tool_result;
+  const toolResponse = postPayload?.tool_response;
+  const result = toolResponse?.stdout || toolResponse?.content || (typeof toolResponse === 'string' ? toolResponse : null);
 
   // For non-tool events, show basic info
   if (event.subtype === 'UserPromptSubmit') {
