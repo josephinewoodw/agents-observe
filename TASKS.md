@@ -2,13 +2,23 @@
 
 ## QUEUED TASKS
 
-- [ ] Make agent chips clickable to filter by agent
-- [ ] Show the cwd for the session underneath the session in the sidebar
-- [ ] Make the Activity Timeline pane vertically resizable
-- [ ] Fix the conversation (chat) thread view - it currently shows PreTool & PostTool but no info
-  - The chat view should really just be the same list and summaries as the main view - we're just grouping them here for convenience so the user can see the relevant thread in one compact view
-- [ ] Apply the .prettierrc linting to all app/* files
-- [ ] Re-order agent chips to always show the active ones on the left
+(empty)
+
+---
+
+## COMPLETED TASKS
+
+- [x] Make agent chips clickable to filter by agent
+- [x] Show the cwd for the session underneath the session in the sidebar
+- [x] Make the Activity Timeline pane vertically resizable
+- [x] Fix the conversation (chat) thread view with proper tool display
+- [x] Apply the .prettierrc linting to all app/* files
+- [x] Re-order agent chips to always show the active ones on the left
+- [x] Add tooltips to agent names in Activity Timeline to show the full name
+- [x] Add URL hash routing for project and session selection
+- [x] Order agent chips: Main first, then by most recent activity
+- [x] Auto scroll to bottom on session select
+- [x] Add bottom padding to event stream
 
 ---
 

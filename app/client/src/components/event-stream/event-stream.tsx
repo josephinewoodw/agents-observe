@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import { useEvents } from '@/hooks/use-events'
 import { useAgents } from '@/hooks/use-agents'
 import { useUIStore } from '@/stores/ui-store'
@@ -90,8 +90,17 @@ export function EventStream() {
     )
   }
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when session changes or first load
+  useEffect(() => {
+    if (scrollRef.current && filteredEvents.length > 0) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [effectiveSessionId])
+
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
       <div className="divide-y divide-border/50">
         {filteredEvents.map((event) => (
           <EventRow
@@ -102,6 +111,7 @@ export function EventStream() {
             showAgentLabel={showAgentLabel}
           />
         ))}
+        <div className="h-8" />
       </div>
     </div>
   )

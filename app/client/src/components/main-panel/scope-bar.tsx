@@ -28,9 +28,14 @@ export function ScopeBar() {
       : allAgents
 
   const sortedAgents = [...visibleAgents].sort((a, b) => {
+    // Main (root) always first
+    if (!a.parentAgentId && b.parentAgentId) return -1
+    if (a.parentAgentId && !b.parentAgentId) return 1
+    // Active before stopped
     if (a.status === 'active' && b.status !== 'active') return -1
     if (a.status !== 'active' && b.status === 'active') return 1
-    return 0
+    // Most recently started first
+    return b.startedAt - a.startedAt
   })
 
   return (
