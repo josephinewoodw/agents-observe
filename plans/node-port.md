@@ -22,7 +22,7 @@ app/client/ (Vite + React)
 ```
 app/server/ (Node.js)
   - Pluggable storage adapters (SQLite, D1, Postgres)
-  - Express for HTTP
+  - Hono for HTTP
   - Optional WebSocket (ws package, env-toggleable)
   - Polling-capable API (works without WebSocket)
   - Serves built client static files on same port
@@ -83,13 +83,13 @@ All methods are async (Promise-based) even though SQLite is synchronous. This al
 
 ### HTTP Layer
 
-Replace Bun.serve() with Express:
+Replace Bun.serve() with Hono (runs on Node, Cloudflare Workers, Bun, Deno):
 
 ```
 server/
   src/
     index.ts              # Entry: create app, start server
-    app.ts                # Express app factory (testable without listen())
+    app.ts                # Hono app factory (testable without listen())
     routes/
       events.ts           # POST /api/events, GET /api/events/:id/thread
       projects.ts         # GET /api/projects
@@ -128,16 +128,15 @@ server/
 
 ### Static File Serving
 
-Express serves the built client after all API routes:
+Hono serves the built client after all API routes using `hono/serve-static`:
 
 ```typescript
-const distPath = path.join(__dirname, '../../client/dist')
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath))
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'))
-  })
-}
+import { serveStatic } from '@hono/node-server/serve-static'
+
+// Static assets
+app.use('/*', serveStatic({ root: '../../client/dist' }))
+// SPA fallback
+app.get('*', (c) => c.html(readFileSync('../../client/dist/index.html', 'utf8')))
 ```
 
 Single port serves everything. Dev mode still uses Vite's proxy.
@@ -164,10 +163,10 @@ Extract all DB logic from current db.ts into the SQLite adapter. All methods ret
 
 ---
 
-### Task 2: Express HTTP Server
+### Task 2: Hono HTTP Server
 
 **Files to create:**
-- `app/server/src/app.ts` - Express app factory
+- `app/server/src/app.ts` - Hono app factory
 - `app/server/src/routes/events.ts`
 - `app/server/src/routes/projects.ts`
 - `app/server/src/routes/sessions.ts`
@@ -179,13 +178,13 @@ Extract all DB logic from current db.ts into the SQLite adapter. All methods ret
 **Files to delete:**
 - `app/server/src/db.ts` (replaced by storage layer)
 
-Each route file exports an Express Router. Routes call `store.method()` instead of direct DB functions. Same URL patterns and response shapes.
+Each route file exports a Hono app (sub-router via `new Hono()`). Routes call `store.method()` instead of direct DB functions. Same URL patterns and response shapes.
 
 **package.json changes:**
 - Remove: `bun-types`, `@types/bun`
-- Add: `express`, `better-sqlite3`, `ws`, `tsx`
-- Add: `@types/express`, `@types/better-sqlite3`, `@types/ws`
-- Scripts: `"dev": "tsx watch src/index.ts"`, `"start": "tsx src/index.ts"`
+- Add: `hono`, `@hono/node-server`, `better-sqlite3`, `ws`, `vitest`
+- Add: `@types/better-sqlite3`, `@types/ws`
+- Scripts: `"dev": "vite-node src/index.ts"`, `"build": "vite build"`, `"start": "node dist/server.js"`
 
 ---
 
@@ -239,7 +238,19 @@ No more dev vs prod branching. Vite proxy handles dev mode.
 
 ### Task 7: Update Build + Docker
 
-**Dockerfile:** Single stage, Node 22, install deps, build client, run server. One port, no Bun.
+**Dockerfile:**
+```dockerfile
+FROM node:22-slim
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build        # Builds both client (Vite) and server (Vite SSR)
+EXPOSE 4001
+CMD ["node", "dist/server.js"]
+```
+
+Single stage. Single artifact. No TypeScript at runtime.
 
 **docker-compose.yml:** Single service, single port, ENABLE_WEBSOCKET env var.
 
@@ -261,7 +272,7 @@ Stub implementation with the EventStore interface. Same SQL as SQLite (D1 is SQL
 
 1. Create branch `chore/node-port`
 2. Implement storage interface + SQLite adapter (Task 1)
-3. Port HTTP server to Express (Task 2)
+3. Port HTTP server to Hono (Task 2)
 4. Port WebSocket to ws package (Task 3)
 5. Add polling endpoint (Task 4)
 6. Client WS fallback to polling (Task 5)
@@ -276,22 +287,29 @@ Stub implementation with the EventStore interface. Same SQL as SQLite (D1 is SQL
 15. Delete Bun-specific files (bun.lock, bun-types)
 16. Merge to main
 
+## Decisions
+
+- **Hono** over Hono. Lighter, runs natively on Cloudflare Workers, Node, Bun, Deno. No Hono-specific middleware ecosystem needed for this project.
+- **Vite for server build.** Single build tool for both client and server. Use `vite-plugin-node` or Vite's library mode to compile the server to a single JS bundle. Production runs `node dist/server.js` — no tsx, no ts-node, no TypeScript at runtime.
+- **SSE as a transport option.** Add alongside WebSocket and polling. SSE works in Cloudflare Workers without Durable Objects, is simpler than WebSocket, and is push-based (unlike polling). Three transport modes: WebSocket (default local), SSE (default Cloudflare), polling (fallback).
+
 ## New Dependencies
 
 ```
-express           # HTTP framework
-better-sqlite3    # SQLite driver (native)
-ws                # WebSocket server
-tsx               # TypeScript execution for Node
+hono              # HTTP framework (runs everywhere)
+better-sqlite3    # SQLite driver for local (native module)
+ws                # WebSocket server for local
 vitest            # Test runner
+vite              # Already present for client; also builds server
 
-@types/express
 @types/better-sqlite3
 @types/ws
 ```
 
+No `tsx` needed — Vite builds the server to plain JS for production. Dev uses `vite-node` or `tsx` for convenience.
+
 ## Open Questions
 
-1. **tsx vs ts-node vs esbuild?** tsx is simplest (no config). For production, could pre-compile with tsc or esbuild.
-2. **Express vs Hono?** Hono is lighter and runs on Cloudflare Workers natively. Express is more familiar. Could use Hono for easier Cloudflare deployment.
-3. **SSE vs polling?** SSE (Server-Sent Events) is a middle ground between WebSocket and polling. Works in Cloudflare Workers. Could add as a third transport option.
+1. **Vite server build config** — use `vite-node` for dev, `vite build --ssr` for production? Or a separate `vite.config.server.ts`? Need to handle the `better-sqlite3` native module (externalize it from the bundle).
+2. **Hono WebSocket adapter** — Hono has `hono/ws` but it's limited. For full WebSocket on Node, still need `ws` package alongside Hono. Hono handles HTTP routing, `ws` handles upgrades.
+3. **Monorepo structure** — with Vite building both client and server, consider a workspace setup (`package.json` workspaces) for shared types.
