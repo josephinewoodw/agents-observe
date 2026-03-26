@@ -1,18 +1,18 @@
-// app2/server/src/db.ts
-import { Database } from 'bun:sqlite';
+// app/server/src/db.ts
+import { Database } from 'bun:sqlite'
 
-let db: Database;
+let db: Database
 
 export function getDb(): Database {
-  return db;
+  return db
 }
 
 export function initDatabase(dbPath?: string): Database {
-  db = new Database(dbPath || process.env.DB_PATH || 'app2.db');
+  db = new Database(dbPath || process.env.DB_PATH || 'app.db')
 
-  db.exec('PRAGMA journal_mode = WAL');
-  db.exec('PRAGMA synchronous = NORMAL');
-  db.exec('PRAGMA foreign_keys = ON');
+  db.exec('PRAGMA journal_mode = WAL')
+  db.exec('PRAGMA synchronous = NORMAL')
+  db.exec('PRAGMA foreign_keys = ON')
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS projects (
@@ -20,7 +20,7 @@ export function initDatabase(dbPath?: string): Database {
       name TEXT NOT NULL,
       created_at INTEGER NOT NULL
     )
-  `);
+  `)
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -33,7 +33,7 @@ export function initDatabase(dbPath?: string): Database {
       metadata TEXT,
       FOREIGN KEY (project_id) REFERENCES projects(id)
     )
-  `);
+  `)
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS agents (
@@ -48,7 +48,7 @@ export function initDatabase(dbPath?: string): Database {
       FOREIGN KEY (session_id) REFERENCES sessions(id),
       FOREIGN KEY (parent_agent_id) REFERENCES agents(id)
     )
-  `);
+  `)
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS events (
@@ -64,23 +64,27 @@ export function initDatabase(dbPath?: string): Database {
       FOREIGN KEY (agent_id) REFERENCES agents(id),
       FOREIGN KEY (session_id) REFERENCES sessions(id)
     )
-  `);
+  `)
 
-  db.exec('CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id, timestamp)');
-  db.exec('CREATE INDEX IF NOT EXISTS idx_events_agent ON events(agent_id, timestamp)');
-  db.exec('CREATE INDEX IF NOT EXISTS idx_events_type ON events(type, subtype)');
-  db.exec('CREATE INDEX IF NOT EXISTS idx_agents_session ON agents(session_id)');
-  db.exec('CREATE INDEX IF NOT EXISTS idx_agents_parent ON agents(parent_agent_id)');
-  db.exec('CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id, timestamp)')
+  db.exec('CREATE INDEX IF NOT EXISTS idx_events_agent ON events(agent_id, timestamp)')
+  db.exec('CREATE INDEX IF NOT EXISTS idx_events_type ON events(type, subtype)')
+  db.exec('CREATE INDEX IF NOT EXISTS idx_agents_session ON agents(session_id)')
+  db.exec('CREATE INDEX IF NOT EXISTS idx_agents_parent ON agents(parent_agent_id)')
+  db.exec('CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)')
 
-  return db;
+  return db
 }
 
 export function upsertProject(id: string, name: string): void {
-  getDb().prepare(`
+  getDb()
+    .prepare(
+      `
     INSERT INTO projects (id, name, created_at) VALUES (?, ?, ?)
     ON CONFLICT(id) DO NOTHING
-  `).run(id, name, Date.now());
+  `
+    )
+    .run(id, name, Date.now())
 }
 
 export function upsertSession(
@@ -90,13 +94,17 @@ export function upsertSession(
   metadata: Record<string, unknown> | null,
   timestamp: number
 ): void {
-  getDb().prepare(`
+  getDb()
+    .prepare(
+      `
     INSERT INTO sessions (id, project_id, slug, status, started_at, metadata)
     VALUES (?, ?, ?, 'active', ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       slug = COALESCE(excluded.slug, sessions.slug),
       metadata = COALESCE(excluded.metadata, sessions.metadata)
-  `).run(id, projectId, slug, timestamp, metadata ? JSON.stringify(metadata) : null);
+  `
+    )
+    .run(id, projectId, slug, timestamp, metadata ? JSON.stringify(metadata) : null)
 }
 
 export function upsertAgent(
@@ -107,25 +115,37 @@ export function upsertAgent(
   name: string | null,
   timestamp: number
 ): void {
-  getDb().prepare(`
+  getDb()
+    .prepare(
+      `
     INSERT INTO agents (id, session_id, parent_agent_id, slug, name, status, started_at)
     VALUES (?, ?, ?, ?, ?, 'active', ?)
     ON CONFLICT(id) DO UPDATE SET
       slug = COALESCE(excluded.slug, agents.slug),
       name = COALESCE(excluded.name, agents.name)
-  `).run(id, sessionId, parentAgentId, slug, name, timestamp);
+  `
+    )
+    .run(id, sessionId, parentAgentId, slug, name, timestamp)
 }
 
 export function updateAgentStatus(id: string, status: string): void {
-  getDb().prepare(`
+  getDb()
+    .prepare(
+      `
     UPDATE agents SET status = ?, stopped_at = ? WHERE id = ?
-  `).run(status, status === 'stopped' ? Date.now() : null, id);
+  `
+    )
+    .run(status, status === 'stopped' ? Date.now() : null, id)
 }
 
 export function updateSessionStatus(id: string, status: string): void {
-  getDb().prepare(`
+  getDb()
+    .prepare(
+      `
     UPDATE sessions SET status = ?, stopped_at = ? WHERE id = ?
-  `).run(status, status === 'stopped' ? Date.now() : null, id);
+  `
+    )
+    .run(status, status === 'stopped' ? Date.now() : null, id)
 }
 
 export function insertEvent(
@@ -138,26 +158,41 @@ export function insertEvent(
   timestamp: number,
   payload: Record<string, unknown>
 ): number {
-  const result = getDb().prepare(`
+  const result = getDb()
+    .prepare(
+      `
     INSERT INTO events (agent_id, session_id, type, subtype, tool_name, summary, timestamp, payload)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(agentId, sessionId, type, subtype, toolName, summary, timestamp, JSON.stringify(payload));
+  `
+    )
+    .run(agentId, sessionId, type, subtype, toolName, summary, timestamp, JSON.stringify(payload))
 
-  return result.lastInsertRowid as number;
+  return result.lastInsertRowid as number
 }
 
-export function getProjects(): Array<{ id: string; name: string; created_at: number; session_count: number }> {
-  return getDb().prepare(`
+export function getProjects(): Array<{
+  id: string
+  name: string
+  created_at: number
+  session_count: number
+}> {
+  return getDb()
+    .prepare(
+      `
     SELECT p.*, COUNT(DISTINCT s.id) as session_count
     FROM projects p
     LEFT JOIN sessions s ON s.project_id = p.id
     GROUP BY p.id
     ORDER BY p.created_at DESC
-  `).all() as any[];
+  `
+    )
+    .all() as any[]
 }
 
 export function getSessionsForProject(projectId: string): Array<any> {
-  return getDb().prepare(`
+  return getDb()
+    .prepare(
+      `
     SELECT s.*,
       COUNT(DISTINCT a.id) as agent_count,
       COUNT(DISTINCT e.id) as event_count
@@ -167,11 +202,15 @@ export function getSessionsForProject(projectId: string): Array<any> {
     WHERE s.project_id = ?
     GROUP BY s.id
     ORDER BY s.started_at DESC
-  `).all(projectId) as any[];
+  `
+    )
+    .all(projectId) as any[]
 }
 
 export function getAgentsForSession(sessionId: string): Array<any> {
-  return getDb().prepare(`
+  return getDb()
+    .prepare(
+      `
     SELECT a.*,
       COUNT(DISTINCT e.id) as event_count
     FROM agents a
@@ -179,67 +218,77 @@ export function getAgentsForSession(sessionId: string): Array<any> {
     WHERE a.session_id = ?
     GROUP BY a.id
     ORDER BY a.started_at ASC
-  `).all(sessionId) as any[];
+  `
+    )
+    .all(sessionId) as any[]
 }
 
 export function getEventsForSession(
   sessionId: string,
   filters?: {
-    agentIds?: string[];
-    type?: string;
-    subtype?: string;
-    search?: string;
-    limit?: number;
-    offset?: number;
+    agentIds?: string[]
+    type?: string
+    subtype?: string
+    search?: string
+    limit?: number
+    offset?: number
   }
 ): Array<any> {
-  let sql = 'SELECT * FROM events WHERE session_id = ?';
-  const params: any[] = [sessionId];
+  let sql = 'SELECT * FROM events WHERE session_id = ?'
+  const params: any[] = [sessionId]
 
   if (filters?.agentIds && filters.agentIds.length > 0) {
-    const placeholders = filters.agentIds.map(() => '?').join(',');
-    sql += ` AND agent_id IN (${placeholders})`;
-    params.push(...filters.agentIds);
+    const placeholders = filters.agentIds.map(() => '?').join(',')
+    sql += ` AND agent_id IN (${placeholders})`
+    params.push(...filters.agentIds)
   }
 
   if (filters?.type) {
-    sql += ' AND type = ?';
-    params.push(filters.type);
+    sql += ' AND type = ?'
+    params.push(filters.type)
   }
 
   if (filters?.subtype) {
-    sql += ' AND subtype = ?';
-    params.push(filters.subtype);
+    sql += ' AND subtype = ?'
+    params.push(filters.subtype)
   }
 
   if (filters?.search) {
-    sql += ' AND (summary LIKE ? OR payload LIKE ?)';
-    const term = `%${filters.search}%`;
-    params.push(term, term);
+    sql += ' AND (summary LIKE ? OR payload LIKE ?)'
+    const term = `%${filters.search}%`
+    params.push(term, term)
   }
 
-  sql += ' ORDER BY timestamp ASC';
+  sql += ' ORDER BY timestamp ASC'
 
   if (filters?.limit) {
-    sql += ' LIMIT ?';
-    params.push(filters.limit);
+    sql += ' LIMIT ?'
+    params.push(filters.limit)
     if (filters?.offset) {
-      sql += ' OFFSET ?';
-      params.push(filters.offset);
+      sql += ' OFFSET ?'
+      params.push(filters.offset)
     }
   }
 
-  return getDb().prepare(sql).all(...params) as any[];
+  return getDb()
+    .prepare(sql)
+    .all(...params) as any[]
 }
 
 export function getEventsForAgent(agentId: string): Array<any> {
-  return getDb().prepare(`
+  return getDb()
+    .prepare(
+      `
     SELECT * FROM events WHERE agent_id = ? ORDER BY timestamp ASC
-  `).all(agentId) as any[];
+  `
+    )
+    .all(agentId) as any[]
 }
 
 export function getSessionById(sessionId: string): any {
-  return getDb().prepare(`
+  return getDb()
+    .prepare(
+      `
     SELECT s.*,
       COUNT(DISTINCT a.id) as agent_count,
       COUNT(DISTINCT e.id) as event_count
@@ -248,13 +297,15 @@ export function getSessionById(sessionId: string): any {
     LEFT JOIN events e ON e.session_id = s.id
     WHERE s.id = ?
     GROUP BY s.id
-  `).get(sessionId);
+  `
+    )
+    .get(sessionId)
 }
 
 export function clearAllData(): void {
-  const d = getDb();
-  d.exec('DELETE FROM events');
-  d.exec('DELETE FROM agents');
-  d.exec('DELETE FROM sessions');
-  d.exec('DELETE FROM projects');
+  const d = getDb()
+  d.exec('DELETE FROM events')
+  d.exec('DELETE FROM agents')
+  d.exec('DELETE FROM sessions')
+  d.exec('DELETE FROM projects')
 }
