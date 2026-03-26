@@ -300,8 +300,22 @@ function relPath(fp: string | undefined, cwd: string | undefined): string {
 
 // ── Thread event (for conversation view) ──────────────────
 
+const LABEL_MAP: Record<string, string> = {
+  UserPromptSubmit: 'Prompt',
+  PreToolUse: 'Tool',
+  PostToolUse: 'Tool',
+  stop_hook_summary: 'Stop',
+  SubagentStop: 'SubStop',
+  SessionStart: 'Session',
+};
+
 function ThreadEvent({ event, isCurrentEvent }: { event: ParsedEvent; isCurrentEvent: boolean }) {
   const icon = getEventIcon(event.subtype, event.toolName);
+  const isTool = event.subtype === 'PreToolUse' || event.subtype === 'PostToolUse';
+  const isCompleted = event.status === 'completed';
+  const rawLabel = event.subtype || event.type;
+  const displayLabel = LABEL_MAP[rawLabel] || rawLabel;
+  const summary = getEventSummary(event);
 
   return (
     <div
@@ -311,9 +325,22 @@ function ThreadEvent({ event, isCurrentEvent }: { event: ParsedEvent; isCurrentE
       )}
     >
       <span className="text-xs shrink-0">{icon}</span>
-      <span className="w-24 shrink-0 truncate">{event.subtype || event.type}</span>
-      <span className="truncate flex-1">
-        {getEventSummary(event)}
+      <span className="w-14 shrink-0 truncate">{displayLabel}</span>
+      {isTool && (
+        <span className={cn(
+          'text-[10px] shrink-0 w-3',
+          isCompleted ? 'text-green-500' : 'text-yellow-500/70'
+        )}>
+          {isCompleted ? '✓' : '…'}
+        </span>
+      )}
+      {isTool && event.toolName && (
+        <span className="text-xs font-medium text-blue-400 shrink-0">
+          {event.toolName}
+        </span>
+      )}
+      <span className="truncate flex-1 text-[10px]">
+        {summary}
       </span>
       <span className="text-[9px] text-muted-foreground/50 tabular-nums shrink-0">
         {new Date(event.timestamp).toLocaleTimeString('en-US', {
