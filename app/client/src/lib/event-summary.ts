@@ -109,9 +109,14 @@ function getStopSummary(event: ParsedEvent, allEvents?: ParsedEvent[]): string {
   return 'Session stopped';
 }
 
-// Collapse newlines/whitespace into a single line
+// Collapse newlines/whitespace into a single line, strip markdown
 function oneLine(s: string): string {
-  return s.replace(/\s*\n\s*/g, ' ').trim();
+  return s
+    .replace(/\*\*(.*?)\*\*/g, '$1')   // **bold** → bold
+    .replace(/`([^`]+)`/g, '$1')        // `code` → code
+    .replace(/^[-*] /gm, '')            // strip list markers
+    .replace(/\s*\n\s*/g, ' ')
+    .trim();
 }
 
 // Strip cwd prefix to show relative paths
