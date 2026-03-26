@@ -67,12 +67,22 @@ const server = Bun.serve({
       try {
         const raw = await req.json()
 
-        if (LOG_LEVEL === 'debug') {
-          console.log('[EVENT] Raw payload:', JSON.stringify(raw).slice(0, 500))
-          console.log('[EVENT] Keys:', Object.keys(raw).join(', '))
+        if (LOG_LEVEL === 'debug' || LOG_LEVEL === 'trace') {
+          const logKeys = Object.keys(raw).join(', ')
+          const payload = JSON.stringify(raw)
+          const logPayload =
+            LOG_LEVEL === 'trace'
+              ? `Payload: ${payload}`
+              : `Keys: ${logKeys} \nPayload: ${payload.slice(0, 500)}`
+
           if (raw.hook_event_name) {
-            console.log(`[EVENT] hook=${raw.hook_event_name} tool=${raw.tool_name || '-'} tool_use_id=${raw.tool_use_id || '-'}`)
-            console.log(`[EVENT] has tool_input=${!!raw.tool_input} has tool_response=${!!raw.tool_response}`)
+            const toolInfo = raw.tool_name
+              ? `tool:${raw.tool_name} tool_use_id:${raw.tool_use_id}`
+              : ''
+            console.log(`[HOOK:${raw.hook_event_name}] ${toolInfo} \n${logPayload}\n---`)
+            // console.log(`[EVENT] has tool_input=${!!raw.tool_input} has tool_response=${!!raw.tool_response}`)
+          } else {
+            console.log('[EVENT]', logPayload)
           }
         }
 
