@@ -81,6 +81,11 @@ export function parseRawEvent(raw: Record<string, unknown>): ParsedRawEvent {
         subtype = 'SubagentStop'
         subAgentId = (raw.agent_id as string) || null
         break
+      case 'PostToolUseFailure':
+        type = 'tool'
+        subtype = 'PostToolUseFailure'
+        toolName = hookToolName || null
+        break
       case 'Notification':
         type = 'system'
         subtype = 'Notification'

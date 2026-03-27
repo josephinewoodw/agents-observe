@@ -36,8 +36,10 @@ export function getEventSummary(event: ParsedEvent, allEvents?: ParsedEvent[]): 
 
     case 'PreToolUse':
     case 'PostToolUse':
-    case 'PostToolUseFailure':
       return getToolSummary(event.toolName, p.tool_input, cwd);
+
+    case 'PostToolUseFailure':
+      return oneLine(p.error || getToolSummary(event.toolName, p.tool_input, cwd) || 'Tool failed');
 
     case 'PermissionRequest':
       return p.tool_name ? `${p.tool_name}` : 'Permission requested';

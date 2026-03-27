@@ -55,6 +55,7 @@ export function EventRow({ event, allEvents, agentMap, showAgentLabel }: EventRo
   const icon = getEventIcon(event.subtype, event.toolName)
 
   const isTool = event.subtype === 'PreToolUse' || event.subtype === 'PostToolUse' || event.subtype === 'PostToolUseFailure'
+  const isFailure = event.subtype === 'PostToolUseFailure'
   const isCompleted = event.status === 'completed'
 
   // Friendly display labels for subtypes
@@ -128,10 +129,10 @@ export function EventRow({ event, allEvents, agentMap, showAgentLabel }: EventRo
             <span
               className={cn(
                 'text-[10px] shrink-0 w-3',
-                isCompleted ? 'text-green-500' : 'text-yellow-500/70',
+                isFailure ? 'text-red-500' : isCompleted ? 'text-green-500' : 'text-yellow-500/70',
               )}
             >
-              {isCompleted ? '✓' : '…'}
+              {isFailure ? '✗' : isCompleted ? '✓' : '…'}
             </span>
           )}
           {isTool && event.toolName && (
