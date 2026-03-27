@@ -13,6 +13,9 @@ export class SqliteAdapter implements EventStore {
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('synchronous = NORMAL')
     this.db.pragma('foreign_keys = ON')
+    this.db.pragma('cache_size = -64000') // 64MB cache (default 2MB)
+    this.db.pragma('temp_store = MEMORY')
+    this.db.pragma('mmap_size = 30000000') // 30MB memory-mapped I/O
 
     // Create tables
     this.db.exec(`
@@ -80,6 +83,7 @@ export class SqliteAdapter implements EventStore {
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id, timestamp)')
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_events_agent ON events(agent_id, timestamp)')
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_events_type ON events(type, subtype)')
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_events_session_agent ON events(session_id, agent_id, timestamp)')
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_events_tool_use_id ON events(tool_use_id)')
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_agents_session ON agents(session_id)')
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_agents_parent ON agents(parent_agent_id)')
