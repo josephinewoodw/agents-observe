@@ -2,10 +2,6 @@
 
 ## QUEUED TASKS
 
-- [x] Debug why filter buttons are super lagging in some cases (2215ms → 500ms)
-  - Root cause: 700+ EventRow components re-rendered on every filter toggle
-  - Fix: React.memo on EventRow, useDeferredValue for filter state, removed allEvents prop
-  - Also: pre-built lookup map for filter matching (O(1) vs O(n) per event)
 - [ ] Fix the expand sidebar button in collapsed mode - it's currently overlapping with "Filters:"
   - use devtools to debug - discuss options if shadcn doesn't already offer a standard UX pattern for solving this
 - [ ] Add a loader (spinner) element to the Logs modal - it should immediately open and then show loading state
@@ -16,12 +12,20 @@
   - Confirmation modal should be used for the delete buttons
 - [ ] Filter state should reset to All when switching sessions or should be preserved per session
   - Currently, the filter state is preserved while switch but each session has different events, leading to possible user confusion
-- [ ] Add the corresponding Tool: Agent to the stream when filtering by agent chip
-  - We want to show the tool call that spawned the agent since that's what has the prompt that was passed to the sub-agent
-  - the agentId is in the tool_reponse
+- [ ] Review & fix sub-agent naming code
+  - The "Review client query perf" and "Review server query perf" sub-agents were both named "Review server query perf" for some reason
+  - the user prompt that triggered the creation of the two sub-agents: "yes, dive deep into the lag issue. use agent teams to do the review if appropriate"
+- [x] Add the corresponding Tool: Agent to the stream when filtering by agent chip
+  - Spawn map links subagentId → toolUseId, included in agent chip filter
+  - SubagentStart expanded view now shows the Agent tool prompt from the thread
+- [ ] Add a 60m option to the Activity Timeline
 
 ## COMPLETED TASKS
 
+- [x] Debug why filter buttons are super lagging in some cases (2215ms → 500ms)
+  - Root cause: 700+ EventRow components re-rendered on every filter toggle
+  - Fix: React.memo on EventRow, useDeferredValue for filter state, removed allEvents prop
+  - Also: pre-built lookup map for filter matching (O(1) vs O(n) per event)
 - [x] Add Events status bar above the events stream
 - [x] Add a "Filters:" label before the static filters - similar to "Agents:" and "Activity:" labels
 - [x] Add Tool "Agent" to the Agents static filter - i.e. shows SubAgentStart/Stop and Tool -> Agent so we can see how the agent was started

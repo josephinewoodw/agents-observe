@@ -24,7 +24,6 @@ export function EventStream() {
   const deferredToolFilters = useDeferredValue(activeToolFilters)
 
   const { data: events } = useEvents(selectedSessionId, {
-    agentIds: selectedAgentIds.length > 0 ? selectedAgentIds : undefined,
     search: searchQuery || undefined,
   })
 
@@ -42,31 +41,56 @@ export function EventStream() {
     return map
   }, [agents])
 
-  // Dedupe tool events: merge PostToolUse into matching PreToolUse by toolUseId
-  const deduped = useMemo(() => {
-    if (!events) return []
+  // Dedupe tool events + build spawn map (subagentId → toolUseId of Agent call)
+  const { deduped, spawnToolUseIds } = useMemo(() => {
+    if (!events) return { deduped: [], spawnToolUseIds: new Map<string, string>() }
     const result: ParsedEvent[] = []
     const toolUseMap = new Map<string, number>() // toolUseId -> index in result
+    const spawns = new Map<string, string>() // subagentId -> toolUseId
 
     for (const e of events) {
       if (e.subtype === 'PreToolUse' && e.toolUseId) {
         toolUseMap.set(e.toolUseId, result.length)
         result.push({ ...e }) // copy so we can mutate status
       } else if (e.subtype === 'PostToolUse' && e.toolUseId && toolUseMap.has(e.toolUseId)) {
-        // Merge: keep PreToolUse row position but swap in PostToolUse payload (has tool_response)
         const idx = toolUseMap.get(e.toolUseId)!
         result[idx] = { ...result[idx], status: 'completed', payload: e.payload }
+        // Track Agent tool spawns: payload.tool_response.agentId → toolUseId
+        if (e.toolName === 'Agent') {
+          const agentId = (e.payload as any)?.tool_response?.agentId
+          if (agentId) spawns.set(agentId, e.toolUseId)
+        }
       } else {
         result.push(e)
       }
     }
-    return result
+    return { deduped: result, spawnToolUseIds: spawns }
   }, [events])
 
+  // Apply all client-side filters: agent selection + static/tool filters
   const filteredEvents = useMemo(() => {
-    if (deferredStaticFilters.length === 0 && deferredToolFilters.length === 0) return deduped
-    return deduped.filter((e) => eventMatchesFilters(e, deferredStaticFilters, deferredToolFilters))
-  }, [deduped, deferredStaticFilters, deferredToolFilters])
+    let filtered = deduped
+
+    // Agent chip filtering (client-side, includes spawning Tool:Agent calls)
+    if (selectedAgentIds.length > 0) {
+      const spawnIds = new Set<string>()
+      for (const agentId of selectedAgentIds) {
+        const toolUseId = spawnToolUseIds.get(agentId)
+        if (toolUseId) spawnIds.add(toolUseId)
+      }
+      filtered = filtered.filter((e) =>
+        selectedAgentIds.includes(e.agentId) ||
+        (e.toolUseId != null && spawnIds.has(e.toolUseId))
+      )
+    }
+
+    // Static + dynamic tool filters
+    if (deferredStaticFilters.length > 0 || deferredToolFilters.length > 0) {
+      filtered = filtered.filter((e) => eventMatchesFilters(e, deferredStaticFilters, deferredToolFilters))
+    }
+
+    return filtered
+  }, [deduped, selectedAgentIds, spawnToolUseIds, deferredStaticFilters, deferredToolFilters])
 
   const showAgentLabel = agentMap.size > 1
   const scrollRef = useRef<HTMLDivElement>(null)

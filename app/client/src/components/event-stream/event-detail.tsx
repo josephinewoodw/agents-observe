@@ -11,7 +11,7 @@ interface EventDetailProps {
   event: ParsedEvent
 }
 
-const THREAD_SUBTYPES = ['UserPromptSubmit', 'Stop', 'SubagentStop']
+const THREAD_SUBTYPES = ['UserPromptSubmit', 'Stop', 'SubagentStart', 'SubagentStop']
 
 export function EventDetail({ event }: EventDetailProps) {
   const [copied, setCopied] = useState(false)
@@ -184,10 +184,15 @@ function ToolDetail({
   }
 
   if (event.subtype === 'SubagentStart') {
+    const agentCall = thread?.find((e) => e.subtype === 'PreToolUse' && e.toolName === 'Agent')
+    const agentInput = agentCall ? (agentCall.payload as any)?.tool_input : null
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {payload.agent_name && <DetailRow label="Agent" value={payload.agent_name} />}
-        {payload.description && <DetailRow label="Task" value={payload.description} />}
+        {(agentInput?.description || payload.description) && (
+          <DetailRow label="Task" value={agentInput?.description || payload.description} />
+        )}
+        {agentInput?.prompt && <DetailCode label="Prompt" value={agentInput.prompt} />}
       </div>
     )
   }
