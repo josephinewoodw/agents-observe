@@ -186,9 +186,11 @@ The client automatically falls back to polling every 3 seconds if the WebSocket 
 
 Run `just db-reset` to delete the SQLite database and start fresh. The database is auto-created on the next server start.
 
-## Acknowledgements
+## Related Projects
 
-This project was heavily inspired by [disler's Multi-Agent Observability System](https://github.com/disler/claude-code-hooks-multi-agent-observability).
+- [Agent Super Spy](https://github.com/simple10/agent-super-spy) - full observability stack for agents, can be run locally or remotely
+- [Multi-Agent Observability System](https://github.com/disler/claude-code-hooks-multi-agent-observability) - inspired this project
+- [Claude DevTools](https://github.com/matt1398/claude-devtools) - visualization for claude session files, requires running on local machine
 
 ## License
 
