@@ -39,6 +39,9 @@ export function createApp(store: EventStore, broadcast: (msg: object) => void) {
   if (clientDistPath && fs.existsSync(clientDistPath)) {
     app.use('/*', serveStatic({ root: path.relative(process.cwd(), clientDistPath) }))
 
+    // Return 404 for unmatched API routes before SPA fallback
+    app.all('/api/*', (c) => c.json({ error: 'Not found' }, 404))
+
     // SPA fallback: serve index.html for all non-API routes
     const indexHtml = fs.readFileSync(path.join(clientDistPath, 'index.html'), 'utf8')
     app.get('*', (c) => c.html(indexHtml))

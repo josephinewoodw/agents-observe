@@ -1,11 +1,5 @@
 # TASKS
 
-## QUEUED TASKS
-
-(empty)
-
----
-
 ## COMPLETED TASKS
 
 - [x] Make agent chips clickable to filter by agent

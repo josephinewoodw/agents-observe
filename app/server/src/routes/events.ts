@@ -237,9 +237,16 @@ router.get('/events/:id/thread', async (c) => {
   return c.json(events)
 })
 
-/** Expose for clearing on DELETE /api/data */
+/** Remove a single session from the in-memory root agent cache */
+export function removeSessionRootAgent(sessionId: string): void {
+  sessionRootAgents.delete(sessionId)
+  pendingAgentNames.delete(sessionId)
+}
+
+/** Clear all in-memory session state */
 export function clearSessionRootAgents(): void {
   sessionRootAgents.clear()
+  pendingAgentNames.clear()
 }
 
 export default router

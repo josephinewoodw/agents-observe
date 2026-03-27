@@ -101,6 +101,19 @@ db-reset:
 
 # ─── Utilities ───────────────────────────────────────────
 
+# Generate hooks config for a project's .claude/settings.json
+setup-hooks project_name:
+    #!/usr/bin/env bash
+    hook_script="{{project_root}}/app/hooks/send_event.mjs"
+    endpoint="http://127.0.0.1:{{port}}/api/events"
+    sed \
+      -e "s|__PROJECT_NAME__|{{project_name}}|g" \
+      -e "s|__EVENTS_ENDPOINT__|${endpoint}|g" \
+      -e "s|__HOOK_SCRIPT__|${hook_script}|g" \
+      "{{project_root}}/settings.template.json"
+    echo ""
+    echo "Copy the above JSON into your project's .claude/settings.json"
+
 # Check server health
 health:
     @curl -sf http://localhost:{{ port }}/api/projects > /dev/null 2>&1 \

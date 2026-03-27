@@ -66,44 +66,18 @@ See [justfile](./justfile) for additional commands.
 
 ### 2. Configure Claude Code hooks
 
-Copy the hooks configuration into your Claude Code settings. You can add it to either:
+Generate the hooks config for your project:
+
+```bash
+just setup-hooks my-project
+```
+
+This prints a JSON snippet with all paths pre-filled. Copy it into your Claude Code settings at either:
 
 - **Project-level** (recommended): `.claude/settings.json` in your project root
 - **User-level** (all projects): `~/.claude/settings.json`
 
-Add the following to your settings file:
-
-```json
-{
-  "env": {
-    "CLAUDE_OBSERVE_PROJECT_NAME": "my-project",
-    "CLAUDE_OBSERVE_EVENTS_ENDPOINT": "http://127.0.0.1:4001/api/events",
-    "CLAUDE_OBSERVE_HOOK_SCRIPT": "/absolute/path/to/claude-observe/app/hooks/send_event.mjs"
-  },
-  "hooks": {
-    "PreToolUse": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
-    ],
-    "PostToolUse": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
-    ],
-    "Stop": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
-    ],
-    "UserPromptSubmit": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
-    ],
-    "SessionStart": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
-    ],
-    "SubagentStop": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
-    ]
-  }
-}
-```
-
-**Environment variables:**
+**Environment variables set in the config:**
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -111,11 +85,17 @@ Add the following to your settings file:
 | `CLAUDE_OBSERVE_EVENTS_ENDPOINT` | `http://127.0.0.1:4001/api/events` | Full URL for the events endpoint |
 | `CLAUDE_OBSERVE_HOOK_SCRIPT` | (required) | Absolute path to `app/hooks/send_event.mjs` |
 
-### 3. Open the dashboard
+### 3. Verify it works
 
-Navigate to **<http://localhost:5174>** (dev) or **<http://localhost:4001>** (Docker).
+```bash
+# Check the server is running
+just health
 
-Start a Claude Code session in your configured project. Events will stream into the dashboard automatically.
+# Send a test event
+just test-event
+```
+
+Navigate to **<http://localhost:5174>** (dev) or **<http://localhost:4001>** (Docker). You should see the test event appear. Start a Claude Code session in your configured project and events will stream in automatically.
 
 ## Commands
 
@@ -138,10 +118,11 @@ just stop         # Stop Docker containers
 just restart      # Restart Docker containers
 just logs         # Follow Docker container logs
 
-# Shared Commands:
-just health       # Check server health
-just db-reset     # Delete the events database
-just open         # Open the dashboard in browser
+# Setup & Utilities:
+just setup-hooks <name>  # Generate hooks config for a project
+just health              # Check server health
+just db-reset            # Delete the events database
+just open                # Open the dashboard in browser
 ```
 
 ## Project structure
@@ -186,6 +167,24 @@ In dev mode, the client and server run as separate processes with separate ports
 In production or docker mode, the client is bundled and served by the server. Both the API and dashboard are served from the same process and port.
 
 Both local dev and Docker flows default to using the same sqlite database in ./data. The database is auto created as needed.
+
+## Troubleshooting
+
+**Events not appearing in the dashboard?**
+
+1. **Is the server running?** Run `just health` to check.
+2. **Is the hook script configured?** Run `just setup-hooks my-project` and verify the output matches your `.claude/settings.json`.
+3. **Is `CLAUDE_OBSERVE_PROJECT_NAME` set?** If this env var is missing, the hook script will log a warning and skip events.
+4. **Can the hook reach the server?** Run `just test-event` — if the event appears in the dashboard, the server is reachable.
+5. **Is the hook script path correct?** The `CLAUDE_OBSERVE_HOOK_SCRIPT` must be an absolute path to `app/hooks/send_event.mjs`. Check for typos.
+
+**WebSocket disconnected?**
+
+The client automatically falls back to polling every 3 seconds if the WebSocket connection fails. You'll see "Disconnected" in the sidebar — events still appear, just with a slight delay.
+
+**Database issues?**
+
+Run `just db-reset` to delete the SQLite database and start fresh. The database is auto-created on the next server start.
 
 ## Acknowledgements
 

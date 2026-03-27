@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs'
 
 const projectName = process.env.CLAUDE_OBSERVE_PROJECT_NAME
 if (!projectName) {
+  console.warn('[claude-observe] CLAUDE_OBSERVE_PROJECT_NAME not set — skipping event')
   process.exit(0)
 }
 
@@ -18,7 +19,7 @@ const baseUrl = endpointUrl.origin // e.g. http://127.0.0.1:4001
 // ── HTTP helpers ──────────────────────────────────────────
 
 function postJson(url, data) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const body = JSON.stringify(data)
     const parsed = new URL(url)
     const req = request(
@@ -47,8 +48,12 @@ function postJson(url, data) {
         })
       },
     )
-    req.on('error', () => resolve(null))
+    req.on('error', (err) => {
+      console.warn(`[claude-observe] Server unreachable at ${url}: ${err.message}`)
+      resolve(null)
+    })
     req.on('timeout', () => {
+      console.warn(`[claude-observe] Server timeout at ${url}`)
       req.destroy()
       resolve(null)
     })

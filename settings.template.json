@@ -1,0 +1,84 @@
+{
+  "env": {
+    "CLAUDE_OBSERVE_PROJECT_NAME": "__PROJECT_NAME__",
+    "CLAUDE_OBSERVE_EVENTS_ENDPOINT": "__EVENTS_ENDPOINT__",
+    "CLAUDE_OBSERVE_HOOK_SCRIPT": "__HOOK_SCRIPT__"
+  },
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "SessionEnd": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "UserPromptSubmit": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "PreToolUse": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "PermissionRequest": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "Stop": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "StopFailure": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "SubagentStart": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "SubagentStop": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "TeammateIdle": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "TaskCreated": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "TaskCompleted": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "Notification": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "InstructionsLoaded": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "ConfigChange": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "CwdChanged": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "FileChanged": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "PreCompact": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "PostCompact": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "Elicitation": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "ElicitationResult": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "WorktreeCreate": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ],
+    "WorktreeRemove": [
+      { "matcher": "", "hooks": [{ "type": "command", "command": "node $CLAUDE_OBSERVE_HOOK_SCRIPT" }] }
+    ]
+  }
+}
