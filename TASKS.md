@@ -2,12 +2,12 @@
 
 ## QUEUED TASKS
 
-- [ ] Change agent chips to a custom dropdown menu
-  - Show list with: name (what we assigned it), status dot (active or not), tool_input.name, description, start date/time and total runtime (etc. - clarify this first)
-  - List should be dynamically sorted by most recent activity at the top - only sort when menu is opened, not while it's open
-  - Allow mulitple agents to be selected (checkbox or selecting the row?)
-  - Add a "Show All Agents" option at the top
-  - Main agent should always be under "Show All Agents" - e.g. pinned to the top
+- [ ] Sync the agent colors in Activity, agent dropdown, and event stream
+  - Use an ordered list of agent colors and then cycle through them as new agents are created, looping back to first color
+- [ ] In Activity Timeline:
+  - [ ] Add new agents directly underneath Main agent - this will make it easier to see new agent actvivity without needing to scroll to bottom of activity pane
+  - [ ] Make the agent name column about 40% wider
+  - [ ] Make agent name clickable: scroll down to first agent event in stream
 
 - [ ] Add a concept of "selected" row to the events stream
   - When a row is selected and the filters change, auto scroll down to the selected row
@@ -37,6 +37,7 @@
 
 ## COMPLETED TASKS
 
+- [x] Change agent chips to a custom dropdown menu
 - [x] Show Agent ID and Agent Name in Tool:Agent expanded summary instead of results JSON
   - Added AgentIdentity component showing assigned name, dimmed raw name if different, and agent ID
   - Applied to SubagentStart, SubagentStop, and Tool:Agent expanded views

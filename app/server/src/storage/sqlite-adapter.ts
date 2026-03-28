@@ -128,18 +128,20 @@ export class SqliteAdapter implements EventStore {
     slug: string | null,
     name: string | null,
     timestamp: number,
+    agentType?: string | null,
   ): Promise<void> {
     this.db
       .prepare(
         `
-      INSERT INTO agents (id, session_id, parent_agent_id, slug, name, status, started_at)
-      VALUES (?, ?, ?, ?, ?, 'active', ?)
+      INSERT INTO agents (id, session_id, parent_agent_id, slug, name, status, started_at, agent_type)
+      VALUES (?, ?, ?, ?, ?, 'active', ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         slug = COALESCE(excluded.slug, agents.slug),
-        name = COALESCE(excluded.name, agents.name)
+        name = COALESCE(excluded.name, agents.name),
+        agent_type = COALESCE(excluded.agent_type, agents.agent_type)
     `,
       )
-      .run(id, sessionId, parentAgentId, slug, name, timestamp)
+      .run(id, sessionId, parentAgentId, slug, name, timestamp, agentType ?? null)
   }
 
   async updateAgentStatus(id: string, status: string): Promise<void> {

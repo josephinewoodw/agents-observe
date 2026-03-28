@@ -71,6 +71,7 @@ router.get('/sessions/:id/agents', async (c) => {
     startedAt: r.started_at,
     stoppedAt: r.stopped_at,
     eventCount: r.event_count,
+    agentType: r.agent_type || null,
   }))
 
   // Build tree

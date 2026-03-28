@@ -30,6 +30,7 @@ export interface Agent {
   stoppedAt: number | null
   children?: Agent[]
   eventCount?: number
+  agentType?: string | null
 }
 
 export interface ParsedEvent {

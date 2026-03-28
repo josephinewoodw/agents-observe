@@ -52,6 +52,7 @@ export interface EventStore {
     slug: string | null,
     name: string | null,
     timestamp: number,
+    agentType?: string | null,
   ): Promise<void>
   updateAgentStatus(id: string, status: string): Promise<void>
   updateSessionStatus(id: string, status: string): Promise<void>

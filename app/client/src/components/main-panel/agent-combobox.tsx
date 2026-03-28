@@ -102,7 +102,7 @@ export function AgentCombobox() {
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-0" align="start">
+        <PopoverContent className="w-[28rem] p-0" align="start">
           <Command filter={(value, search) => {
             // Custom filter: match against agent display name and description
             const agent = sortedAgents.find((a) => a.id === value)
@@ -158,16 +158,15 @@ export function AgentCombobox() {
                         )}
                       />
                       <div className="flex flex-col min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className={cn('truncate', isMain && 'font-medium')}>
-                            {displayName}
-                          </span>
-                          {agent.name && !isMain && agent.name !== displayName && (
-                            <span className="text-[10px] text-muted-foreground truncate">
-                              {agent.name}
-                            </span>
-                          )}
-                        </div>
+                        <span className={cn('truncate', isMain && 'font-medium')}>
+                          {displayName}
+                        </span>
+                        {!isMain && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50 font-mono">
+                            {agent.agentType && <span>{agent.agentType}</span>}
+                            <span>{agent.id}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0 text-[10px] text-muted-foreground">
                         <span>{formatStartTime(agent.startedAt)}</span>

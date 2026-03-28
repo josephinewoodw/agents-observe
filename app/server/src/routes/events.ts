@@ -27,6 +27,7 @@ const sessionRootAgents = new Map<string, string>()
 // When multiple Agent tools are invoked concurrently (e.g. two subagents spawned
 // in the same turn), each gets its own queue entry so names are assigned 1:1.
 const pendingAgentNames = new Map<string, string>() // toolUseId -> description
+const pendingAgentTypes = new Map<string, string>() // toolUseId -> subagent_type
 const pendingAgentNameQueue = new Map<string, string[]>() // sessionId -> FIFO queue of descriptions
 const namedAgents = new Map<string, Set<string>>() // sessionId -> set of agent IDs already named via queue
 
@@ -91,13 +92,20 @@ router.post('/events', async (c) => {
     // We store it both by toolUseId (for definitive lookup at PostToolUse) and
     // in a per-session FIFO queue (for early naming when subagent events arrive
     // before PostToolUse, since those events don't carry the parent tool_use_id).
-    if (parsed.subtype === 'PreToolUse' && parsed.toolName === 'Agent' && parsed.subAgentName) {
-      if (parsed.toolUseId) {
-        pendingAgentNames.set(parsed.toolUseId, parsed.subAgentName)
+    if (parsed.subtype === 'PreToolUse' && parsed.toolName === 'Agent') {
+      if (parsed.subAgentName) {
+        if (parsed.toolUseId) {
+          pendingAgentNames.set(parsed.toolUseId, parsed.subAgentName)
+        }
+        const queue = pendingAgentNameQueue.get(parsed.sessionId) || []
+        queue.push(parsed.subAgentName)
+        pendingAgentNameQueue.set(parsed.sessionId, queue)
       }
-      const queue = pendingAgentNameQueue.get(parsed.sessionId) || []
-      queue.push(parsed.subAgentName)
-      pendingAgentNameQueue.set(parsed.sessionId, queue)
+      // Stash agent type from tool_input.subagent_type
+      const agentType = (raw as any)?.tool_input?.subagent_type
+      if (agentType && parsed.toolUseId) {
+        pendingAgentTypes.set(parsed.toolUseId, agentType)
+      }
     }
 
     // If the event has an ownerAgentId (from payload.agent_id), this event
@@ -146,12 +154,15 @@ router.post('/events', async (c) => {
       // (set at PreToolUse time) since parsed.subAgentName comes from the same
       // tool_input. Also clean up the pending map entry.
       let subAgentName = parsed.subAgentName
+      let subAgentType: string | null = null
       if (parsed.subtype === 'PostToolUse' && parsed.toolName === 'Agent' && parsed.toolUseId) {
         const nameFromPre = pendingAgentNames.get(parsed.toolUseId)
         if (nameFromPre) {
           subAgentName = subAgentName || nameFromPre
           pendingAgentNames.delete(parsed.toolUseId)
         }
+        subAgentType = pendingAgentTypes.get(parsed.toolUseId) ?? null
+        pendingAgentTypes.delete(parsed.toolUseId)
       }
 
       await store.upsertAgent(
@@ -161,6 +172,7 @@ router.post('/events', async (c) => {
         null,
         subAgentName,
         parsed.timestamp,
+        subAgentType,
       )
 
       // agent_progress events belong to the subagent
