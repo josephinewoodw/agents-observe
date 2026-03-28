@@ -129,6 +129,22 @@ export const COLOR_PRESETS: Record<string, { label: string; iconColor: string; d
   },
 }
 
+// --- Key migration ---
+// Convert old localStorage keys like "PreToolUse:Bash" or "PostToolUse:Bash" to logical keys like "Bash"
+function migrateKeys(data: IconCustomizations): IconCustomizations {
+  const migrated: IconCustomizations = {}
+  let changed = false
+  for (const [key, value] of Object.entries(data)) {
+    const match = key.match(/^(?:Pre|Post)ToolUse(?:Failure)?:(.+)$/)
+    const newKey = match ? match[1] : key
+    if (newKey !== key) changed = true
+    if (!migrated[newKey]) {
+      migrated[newKey] = value
+    }
+  }
+  return changed ? migrated : data
+}
+
 // --- External store for cross-component reactivity ---
 
 let cachedCustomizations: IconCustomizations | null = null
@@ -137,7 +153,14 @@ function getCustomizations(): IconCustomizations {
   if (cachedCustomizations !== null) return cachedCustomizations
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    cachedCustomizations = raw ? JSON.parse(raw) : {}
+    let data: IconCustomizations = raw ? JSON.parse(raw) : {}
+    const migrated = migrateKeys(data)
+    if (migrated !== data) {
+      // Migration changed keys — save the migrated data back
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated))
+      data = migrated
+    }
+    cachedCustomizations = data
   } catch {
     cachedCustomizations = {}
   }
