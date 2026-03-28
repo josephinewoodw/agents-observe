@@ -45,6 +45,10 @@ router.post('/agents/:id/metadata', async (c) => {
       }
     }
 
+    if (data.agentType && typeof data.agentType === 'string') {
+      await store.updateAgentType(agentIdParam, data.agentType)
+    }
+
     return c.json({ ok: true })
   } catch {
     return c.json({ error: 'Invalid request' }, 400)

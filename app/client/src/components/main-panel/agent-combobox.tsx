@@ -157,8 +157,7 @@ export function AgentCombobox() {
                       <span
                         className={cn(
                           'h-2 w-2 shrink-0 rounded-full',
-                          agentColor.dot,
-                          agent.status !== 'active' && 'opacity-40',
+                          agent.status === 'active' ? 'bg-green-500' : 'bg-muted-foreground/40',
                         )}
                       />
                       <div className="flex flex-col min-w-0 flex-1">
@@ -203,8 +202,7 @@ export function AgentCombobox() {
           <span
             className={cn(
               'h-1.5 w-1.5 rounded-full',
-              chipColor.dot,
-              agent.status !== 'active' && 'opacity-40',
+              agent.status === 'active' ? 'bg-green-500' : 'bg-muted-foreground/40',
             )}
           />
           <span className={chipColor.textOnly}>{getAgentDisplayName(agent)}</span>

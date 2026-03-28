@@ -50,4 +50,10 @@ export const api = {
     fetch(`${API_BASE}/projects/${encodeURIComponent(projectId)}`, { method: 'DELETE' }),
   deleteAllData: () =>
     fetch(`${API_BASE}/data`, { method: 'DELETE' }),
+  updateAgentMetadata: (agentId: string, data: { agentType?: string; slug?: string }) =>
+    fetch(`${API_BASE}/agents/${encodeURIComponent(agentId)}/metadata`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
 };

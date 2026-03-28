@@ -49,6 +49,7 @@ export class SqliteAdapter implements EventStore {
         status TEXT DEFAULT 'active',
         started_at INTEGER NOT NULL,
         stopped_at INTEGER,
+        agent_type TEXT,
         FOREIGN KEY (session_id) REFERENCES sessions(id),
         FOREIGN KEY (parent_agent_id) REFERENCES agents(id)
       )
@@ -142,6 +143,10 @@ export class SqliteAdapter implements EventStore {
     `,
       )
       .run(id, sessionId, parentAgentId, slug, name, timestamp, agentType ?? null)
+  }
+
+  async updateAgentType(id: string, agentType: string): Promise<void> {
+    this.db.prepare(`UPDATE agents SET agent_type = ? WHERE id = ?`).run(agentType, id)
   }
 
   async updateAgentStatus(id: string, status: string): Promise<void> {
