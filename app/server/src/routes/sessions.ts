@@ -113,14 +113,24 @@ router.get('/sessions/:id/events', async (c) => {
     payload: JSON.parse(r.payload),
   }))
 
-  // Lazy status correction: only SessionEnd means the session is truly over.
-  // Stop/stop_hook_summary just mean the agent finished a turn.
+  // Lazy status correction based on event history.
+  // Find the last SessionEnd — if events exist after it, the session was resumed.
   if (events.length > 0) {
-    const hasSessionEnd = events.some((e) => e.subtype === 'SessionEnd')
-    if (hasSessionEnd) {
-      const session = await store.getSessionById(sessionId)
-      if (session && session.status === 'active') {
+    let lastSessionEndIdx = -1
+    for (let i = events.length - 1; i >= 0; i--) {
+      if (events[i].subtype === 'SessionEnd') { lastSessionEndIdx = i; break }
+    }
+    const session = await store.getSessionById(sessionId)
+    if (session) {
+      if (lastSessionEndIdx >= 0 && lastSessionEndIdx === events.length - 1 && session.status === 'active') {
+        // SessionEnd is the last event — session is ended
         await store.updateSessionStatus(sessionId, 'stopped')
+      } else if (lastSessionEndIdx >= 0 && lastSessionEndIdx < events.length - 1 && session.status === 'stopped') {
+        // Events exist after SessionEnd — session was resumed
+        await store.updateSessionStatus(sessionId, 'active')
+      } else if (lastSessionEndIdx < 0 && session.status === 'stopped') {
+        // No SessionEnd at all but marked stopped — reactivate
+        await store.updateSessionStatus(sessionId, 'active')
       }
     }
   }

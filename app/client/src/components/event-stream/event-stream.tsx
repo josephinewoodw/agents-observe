@@ -32,15 +32,14 @@ export function EventStream() {
 
   const { data: agents } = useAgents(selectedSessionId)
 
-  // When events load, check if session has a SessionEnd event — if so, refetch
-  // sessions so the sidebar status dot updates (server lazily patches the DB)
+  // After events load, refetch sessions so the server's lazy status
+  // correction (in GET /sessions/:id/events) is reflected in the sidebar
+  const eventsLength = events?.length ?? 0
   useEffect(() => {
-    if (!events || events.length === 0) return
-    const hasSessionEnd = events.some((e) => e.subtype === 'SessionEnd')
-    if (hasSessionEnd) {
+    if (eventsLength > 0) {
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
     }
-  }, [events, queryClient])
+  }, [selectedSessionId, eventsLength, queryClient])
 
   const agentMap = useMemo(() => {
     const map = new Map<string, Agent>()

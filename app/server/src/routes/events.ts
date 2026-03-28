@@ -190,13 +190,21 @@ router.post('/events', async (c) => {
         data: { id: parsed.sessionId, status: 'stopped' },
       })
     } else {
-      // Reactivate root agent if it was previously stopped
+      // Reactivate root agent and session if previously stopped
       const agent = await store.getAgentById(rootAgentId)
       if (agent && agent.status === 'stopped') {
         await store.updateAgentStatus(rootAgentId, 'active')
         broadcast({
           type: 'agent_update',
           data: { id: rootAgentId, status: 'active', sessionId: parsed.sessionId },
+        })
+      }
+      const session = await store.getSessionById(parsed.sessionId)
+      if (session && session.status === 'stopped') {
+        await store.updateSessionStatus(parsed.sessionId, 'active')
+        broadcast({
+          type: 'session_update',
+          data: { id: parsed.sessionId, status: 'active' },
         })
       }
     }
