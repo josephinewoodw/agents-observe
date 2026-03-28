@@ -20,7 +20,6 @@ function DotContainer({
   generation: number
   setScrollToEventId: (id: number | null) => void
 }) {
-  const { iconCustomizationVersion } = useUIStore()
   return (
     <>
       {events.map((event) => {
