@@ -1,0 +1,12 @@
+{
+  "name": "claude-observe",
+  "version": "1.0.0",
+  "description": "Real-time observability dashboard for Claude Code agents",
+  "author": {
+    "name": "simple10"
+  },
+  "homepage": "https://github.com/simple10/claude-observe",
+  "repository": "https://github.com/simple10/claude-observe",
+  "license": "MIT",
+  "keywords": ["observability", "dashboard", "hooks", "agents", "monitoring"]
+}
