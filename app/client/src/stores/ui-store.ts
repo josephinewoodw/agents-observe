@@ -1,23 +1,29 @@
 import { create } from 'zustand'
 
-function parseHash(): { projectId: string | null; sessionId: string | null } {
-  const hash = window.location.hash.slice(1) // remove #
+function parseHash(): { projectId: number | null; sessionId: string | null } {
+  const hash = window.location.hash.slice(1)
   if (!hash || hash === '/') return { projectId: null, sessionId: null }
   const parts = hash.split('/').filter(Boolean)
-  return {
-    projectId: parts[0] || null,
-    sessionId: parts[1] || null,
+  if (parts.length === 1) {
+    return { projectId: null, sessionId: parts[0] }
   }
+  if (parts.length >= 2) {
+    const maybeProjectId = Number(parts[0])
+    if (!isNaN(maybeProjectId)) {
+      return { projectId: maybeProjectId, sessionId: parts[1] }
+    }
+    // Legacy string project ID - just use the session
+    return { projectId: null, sessionId: parts[1] }
+  }
+  return { projectId: null, sessionId: null }
 }
 
-function updateHash(projectId: string | null, sessionId: string | null) {
-  if (!projectId) {
-    window.history.replaceState(null, '', '#/')
-  } else if (!sessionId) {
-    window.history.replaceState(null, '', `#/${projectId}`)
-  } else {
-    window.history.replaceState(null, '', `#/${projectId}/${sessionId}`)
+function updateHash(projectId: number | null, sessionId: string | null) {
+  let hash = '/'
+  if (sessionId) {
+    hash = `/${sessionId}`
   }
+  window.history.replaceState(null, '', `#${hash}`)
 }
 
 interface SessionFilterState {
@@ -38,10 +44,10 @@ interface UIState {
   setSidebarCollapsed: (collapsed: boolean) => void
   setSidebarWidth: (width: number) => void
 
-  selectedProjectId: string | null
+  selectedProjectId: number | null
   selectedSessionId: string | null
   selectedAgentIds: string[]
-  setSelectedProjectId: (id: string | null) => void
+  setSelectedProjectId: (id: number | null) => void
   setSelectedSessionId: (id: string | null) => void
   setSelectedAgentIds: (ids: string[]) => void
   toggleAgentId: (id: string) => void
