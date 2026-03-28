@@ -1,6 +1,7 @@
 export interface Project {
   id: string
   name: string
+  displayName?: string | null
   createdAt: number
   sessionCount?: number
   activeAgentCount?: number
@@ -50,6 +51,7 @@ export interface RecentSession {
   id: string
   projectId: string
   projectName: string
+  projectDisplayName?: string | null
   slug: string | null
   status: string
   startedAt: number

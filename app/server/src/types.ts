@@ -46,6 +46,7 @@ export interface EventRow {
 export interface Project {
   id: string
   name: string
+  displayName?: string | null
   createdAt: number
   sessionCount?: number
   activeAgentCount?: number

@@ -72,6 +72,11 @@ export class SqliteAdapter implements EventStore {
     `)
 
     // Migration: add columns if missing (for existing DBs)
+    const projectCols = this.db.pragma('table_info(projects)') as any[]
+    if (!projectCols.some((c: any) => c.name === 'display_name')) {
+      this.db.exec('ALTER TABLE projects ADD COLUMN display_name TEXT')
+    }
+
     const cols = this.db.pragma('table_info(events)') as any[]
     if (!cols.some((c: any) => c.name === 'tool_use_id')) {
       this.db.exec('ALTER TABLE events ADD COLUMN tool_use_id TEXT')
@@ -187,6 +192,16 @@ export class SqliteAdapter implements EventStore {
     `,
       )
       .run(slug, agentId)
+  }
+
+  async updateProjectDisplayName(projectId: string, displayName: string): Promise<void> {
+    this.db
+      .prepare(
+        `
+      UPDATE projects SET display_name = ? WHERE id = ?
+    `,
+      )
+      .run(displayName, projectId)
   }
 
   async insertEvent(params: InsertEventParams): Promise<number> {
@@ -439,6 +454,7 @@ export class SqliteAdapter implements EventStore {
         `
       SELECT s.*,
         p.name as project_name,
+        p.display_name as project_display_name,
         COUNT(DISTINCT a.id) as agent_count,
         COUNT(DISTINCT CASE WHEN a.status = 'active' THEN a.id END) as active_agent_count,
         COUNT(DISTINCT e.id) as event_count,

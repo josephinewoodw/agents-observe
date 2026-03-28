@@ -6,6 +6,9 @@
 
 ## COMPLETED TASKS
 
+- [x] Add an edit icon to change session slug name in sidebar — inline pencil icon, Enter/blur saves, Escape cancels
+- [x] Add an edit icon in sidebar to change project name — added display_name column, POST /projects/:id/metadata endpoint, inline edit UI
+
 - [x] Add Result (final message) to Prompt expanded summary — finds Stop event in thread, shows last_assistant_message
 - [x] Add clarifying message to delete confirmation modals (only deletes Observe logs, not Claude session files)
 - [x] Improve performance of activity pane and sidebar resizing (direct DOM updates during drag, commit on mouseUp)

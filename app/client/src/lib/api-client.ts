@@ -56,4 +56,16 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
+  updateSessionSlug: (sessionId: string, slug: string) =>
+    fetch(`${API_BASE}/sessions/${encodeURIComponent(sessionId)}/metadata`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug }),
+    }),
+  updateProjectDisplayName: (projectId: string, displayName: string) =>
+    fetch(`${API_BASE}/projects/${encodeURIComponent(projectId)}/metadata`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayName }),
+    }),
 };

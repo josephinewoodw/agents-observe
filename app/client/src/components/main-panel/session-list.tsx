@@ -53,7 +53,8 @@ export function SessionList({ sessions, showProject = false }: SessionListProps)
             : null
         const activeAgents = session.activeAgentCount ?? 0
         const lastTime = ('lastActivity' in session && session.lastActivity) || session.startedAt
-        const projectName = 'projectName' in session ? session.projectName : null
+        const projectDisplayName = 'projectDisplayName' in session ? session.projectDisplayName : null
+        const projectName = projectDisplayName || ('projectName' in session ? session.projectName : null)
 
         return (
           <button

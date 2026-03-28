@@ -1,11 +1,13 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useProjects } from '@/hooks/use-projects'
 import { useSessions } from '@/hooks/use-sessions'
 import { useUIStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ChevronRight, Folder } from 'lucide-react'
+import { ChevronDown, ChevronRight, Folder, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/api-client'
 import type { Session } from '@/types'
 
 interface ProjectListProps {
@@ -92,6 +94,40 @@ function groupSessionsByDate(sessions: Session[]): SessionGroup[] {
 export function ProjectList({ collapsed }: ProjectListProps) {
   const { data: projects } = useProjects()
   const { selectedProjectId, setSelectedProjectId } = useUIStore()
+  const queryClient = useQueryClient()
+
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const projectInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editingProjectId && projectInputRef.current) {
+      projectInputRef.current.focus()
+      projectInputRef.current.select()
+    }
+  }, [editingProjectId])
+
+  const startEditingProject = useCallback((projectId: string, currentName: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingProjectId(projectId)
+    setEditValue(currentName)
+  }, [])
+
+  const cancelEditingProject = useCallback(() => {
+    setEditingProjectId(null)
+    setEditValue('')
+  }, [])
+
+  const saveProjectDisplayName = useCallback(async (projectId: string) => {
+    const trimmed = editValue.trim()
+    if (trimmed) {
+      await api.updateProjectDisplayName(projectId, trimmed)
+      await queryClient.invalidateQueries({ queryKey: ['projects'] })
+      await queryClient.invalidateQueries({ queryKey: ['recentSessions'] })
+    }
+    setEditingProjectId(null)
+    setEditValue('')
+  }, [editValue, queryClient])
 
   if (!projects?.length) {
     return (
@@ -109,6 +145,8 @@ export function ProjectList({ collapsed }: ProjectListProps) {
         )}
         {projects.map((project) => {
           const isSelected = selectedProjectId === project.id
+          const isEditingThis = editingProjectId === project.id
+          const displayLabel = project.displayName || project.name
 
           if (collapsed) {
             return (
@@ -123,10 +161,10 @@ export function ProjectList({ collapsed }: ProjectListProps) {
                     )}
                     onClick={() => setSelectedProjectId(isSelected ? null : project.id)}
                   >
-                    {project.name.charAt(0).toUpperCase()}
+                    {displayLabel.charAt(0).toUpperCase()}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">{project.name}</TooltipContent>
+                <TooltipContent side="right">{displayLabel}</TooltipContent>
               </Tooltip>
             )
           }
@@ -135,10 +173,10 @@ export function ProjectList({ collapsed }: ProjectListProps) {
             <div key={project.id}>
               <button
                 className={cn(
-                  'flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm transition-colors',
+                  'group flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm transition-colors',
                   isSelected ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent',
                 )}
-                onClick={() => setSelectedProjectId(isSelected ? null : project.id)}
+                onClick={() => !isEditingThis && setSelectedProjectId(isSelected ? null : project.id)}
               >
                 {isSelected ? (
                   <ChevronDown className="h-3.5 w-3.5 shrink-0" />
@@ -146,8 +184,35 @@ export function ProjectList({ collapsed }: ProjectListProps) {
                   <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                 )}
                 <Folder className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{project.name}</span>
-                {project.sessionCount != null && (
+                {isEditingThis ? (
+                  <input
+                    ref={projectInputRef}
+                    className="truncate bg-transparent border border-border rounded px-0.5 text-sm outline-none w-full min-w-0"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        saveProjectDisplayName(project.id)
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault()
+                        cancelEditingProject()
+                      }
+                    }}
+                    onBlur={() => saveProjectDisplayName(project.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <>
+                    <span className="truncate">{displayLabel}</span>
+                    <Pencil
+                      data-testid={`edit-project-${project.id}`}
+                      className="h-3 w-3 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-muted-foreground transition-opacity cursor-pointer"
+                      onClick={(e) => startEditingProject(project.id, displayLabel, e)}
+                    />
+                  </>
+                )}
+                {!isEditingThis && project.sessionCount != null && (
                   <Badge variant="secondary" className="ml-auto text-[10px] h-4 px-1">
                     {project.sessionCount}
                   </Badge>
@@ -170,6 +235,39 @@ function shortenCwd(cwd: string): string {
 function SessionList({ projectId }: { projectId: string }) {
   const { data: sessions } = useSessions(projectId)
   const { selectedSessionId, setSelectedSessionId } = useUIStore()
+  const queryClient = useQueryClient()
+
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editingSessionId && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [editingSessionId])
+
+  const startEditing = useCallback((session: Session, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingSessionId(session.id)
+    setEditValue(session.slug || session.id.slice(0, 8))
+  }, [])
+
+  const cancelEditing = useCallback(() => {
+    setEditingSessionId(null)
+    setEditValue('')
+  }, [])
+
+  const saveSlug = useCallback(async (sessionId: string) => {
+    const trimmed = editValue.trim()
+    if (trimmed) {
+      await api.updateSessionSlug(sessionId, trimmed)
+      await queryClient.invalidateQueries({ queryKey: ['sessions', projectId] })
+    }
+    setEditingSessionId(null)
+    setEditValue('')
+  }, [editValue, projectId, queryClient])
 
   const groups = useMemo(() => {
     if (!sessions?.length) return []
@@ -189,6 +287,7 @@ function SessionList({ projectId }: { projectId: string }) {
           </div>
           {group.sessions.map((session) => {
             const isSelected = selectedSessionId === session.id
+            const isEditing = editingSessionId === session.id
             const label = session.slug || session.id.slice(0, 8)
             const cwd = typeof session.metadata?.cwd === 'string' ? session.metadata.cwd : null
             const activeAgents = session.activeAgentCount ?? 0
@@ -206,12 +305,12 @@ function SessionList({ projectId }: { projectId: string }) {
                   <div>
                     <button
                       className={cn(
-                        'flex items-center gap-1.5 w-full rounded-md px-2 py-1 text-xs transition-colors',
+                        'group flex items-center gap-1.5 w-full rounded-md px-2 py-1 text-xs transition-colors',
                         isSelected
                           ? 'bg-accent text-accent-foreground'
                           : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
                       )}
-                      onClick={() => setSelectedSessionId(isSelected ? null : session.id)}
+                      onClick={() => !isEditing && setSelectedSessionId(isSelected ? null : session.id)}
                     >
                       <span
                         className={cn(
@@ -219,11 +318,40 @@ function SessionList({ projectId }: { projectId: string }) {
                           session.status === 'active' ? 'bg-green-500' : 'bg-muted-foreground/60 dark:bg-muted-foreground/40',
                         )}
                       />
-                      <span className="truncate">{label}</span>
-                      <span className="text-[10px] text-muted-foreground/80 dark:text-muted-foreground/60 ml-auto shrink-0">
-                        {formatRelativeTime(session.startedAt)}
-                      </span>
-                      {session.eventCount != null && (
+                      {isEditing ? (
+                        <input
+                          ref={inputRef}
+                          className="truncate bg-transparent border border-border rounded px-0.5 text-xs outline-none w-full min-w-0"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              saveSlug(session.id)
+                            } else if (e.key === 'Escape') {
+                              e.preventDefault()
+                              cancelEditing()
+                            }
+                          }}
+                          onBlur={() => saveSlug(session.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <>
+                          <span className="truncate">{label}</span>
+                          <Pencil
+                            data-testid={`edit-session-${session.id}`}
+                            className="h-3 w-3 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-muted-foreground transition-opacity cursor-pointer"
+                            onClick={(e) => startEditing(session, e)}
+                          />
+                        </>
+                      )}
+                      {!isEditing && (
+                        <span className="text-[10px] text-muted-foreground/80 dark:text-muted-foreground/60 ml-auto shrink-0">
+                          {formatRelativeTime(session.startedAt)}
+                        </span>
+                      )}
+                      {!isEditing && session.eventCount != null && (
                         <Badge variant="outline" className="text-[9px] h-3.5 px-1 shrink-0">
                           {session.eventCount}
                         </Badge>

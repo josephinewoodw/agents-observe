@@ -45,6 +45,36 @@ describe('SqliteAdapter — projects', () => {
     const projects = await store.getProjects()
     expect(projects[0].session_count).toBe(2)
   })
+
+  test('getProjects returns display_name as null by default', async () => {
+    await store.upsertProject('proj1', 'Project 1')
+    const projects = await store.getProjects()
+    expect(projects[0].display_name).toBeNull()
+  })
+
+  test('updateProjectDisplayName sets the display_name', async () => {
+    await store.upsertProject('proj1', 'Project 1')
+    await store.updateProjectDisplayName('proj1', 'My Custom Name')
+    const projects = await store.getProjects()
+    expect(projects[0].display_name).toBe('My Custom Name')
+  })
+
+  test('updateProjectDisplayName can be updated multiple times', async () => {
+    await store.upsertProject('proj1', 'Project 1')
+    await store.updateProjectDisplayName('proj1', 'First Name')
+    await store.updateProjectDisplayName('proj1', 'Second Name')
+    const projects = await store.getProjects()
+    expect(projects[0].display_name).toBe('Second Name')
+  })
+
+  test('getRecentSessions includes project_display_name', async () => {
+    await store.upsertProject('proj1', 'Project 1')
+    await store.updateProjectDisplayName('proj1', 'My Display Name')
+    await store.upsertSession('sess1', 'proj1', null, null, 1000)
+    const recent = await store.getRecentSessions()
+    expect(recent).toHaveLength(1)
+    expect(recent[0].project_display_name).toBe('My Display Name')
+  })
 })
 
 // ---------------------------------------------------------------------------
