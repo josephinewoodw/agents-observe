@@ -123,9 +123,13 @@ function ToolDetail({
 
   // For non-tool events, show basic info
   if (event.subtype === 'UserPromptSubmit') {
+    // Find the Stop event in the thread to get the final assistant message
+    const stopEvent = thread?.find((e) => e.subtype === 'Stop' || e.subtype === 'stop_hook_summary')
+    const finalMessage = (stopEvent?.payload as any)?.last_assistant_message
     return (
       <div className="space-y-1.5">
         <DetailCode label="Prompt" value={payload.prompt} />
+        {finalMessage && <DetailCode label="Result" value={stripMarkdown(finalMessage)} />}
       </div>
     )
   }

@@ -2,10 +2,11 @@
 
 ## QUEUED TASKS
 
-- [ ] Add Result (final message) to Prompt expanded summary event - same as the Stop event
+(none)
 
 ## COMPLETED TASKS
 
+- [x] Add Result (final message) to Prompt expanded summary — finds Stop event in thread, shows last_assistant_message
 - [x] Add clarifying message to delete confirmation modals (only deletes Observe logs, not Claude session files)
 - [x] Improve performance of activity pane and sidebar resizing (direct DOM updates during drag, commit on mouseUp)
 - [x] Add Tool:TaskCreate and Tool:TaskUpdate to the Tasks static filter
