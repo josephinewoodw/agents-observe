@@ -46,21 +46,21 @@ export const eventIcons: Record<string, LucideIcon> = {
   UserPromptSubmit: MessageSquare,
   UserPromptSubmitResponse: MessageSquareReply,
 
-  // Tool use
-  PreToolUse: Wrench,
-  'PreToolUse:Bash': Zap,
-  'PreToolUse:Read': BookOpen,
-  'PreToolUse:Write': Pencil,
-  'PreToolUse:Edit': FilePen,
-  'PreToolUse:Agent': Bot,
-  'PreToolUse:Glob': Search,
-  'PreToolUse:Grep': SearchCode,
-  'PreToolUse:WebSearch': Globe,
-  'PreToolUse:WebFetch': Globe,
-  PostToolUse: CircleCheck,
-  'PostToolUse:Bash': Zap,
-  'PostToolUse:Agent': Bot,
-  PostToolUseFailure: CircleX,
+  // Tool use — logical keys by tool name
+  Bash: Zap,
+  Read: BookOpen,
+  Write: Pencil,
+  Edit: FilePen,
+  Agent: Bot,
+  Glob: Search,
+  Grep: SearchCode,
+  WebSearch: Globe,
+  WebFetch: Globe,
+
+  // Generic tool fallbacks
+  _ToolDefault: Wrench,
+  _ToolSuccess: CircleCheck,
+  _ToolFailure: CircleX,
 
   // Agents & teams
   SubagentStart: Bot,
@@ -108,7 +108,7 @@ export const defaultEventIcon: LucideIcon = Pin
 
 // Color classes for event icons: [stream icon color, solid bg for timeline dots]
 // Using semantic colors to group related event types
-const eventColors: Record<string, [string, string]> = {
+export const eventColors: Record<string, [string, string]> = {
   // Session lifecycle — yellow
   SessionStart: ['text-yellow-600 dark:text-yellow-400', 'bg-yellow-600 dark:bg-yellow-500'],
   SessionEnd: ['text-yellow-600 dark:text-yellow-400', 'bg-yellow-600 dark:bg-yellow-500'],
@@ -121,23 +121,23 @@ const eventColors: Record<string, [string, string]> = {
   UserPromptSubmitResponse: ['text-green-600 dark:text-green-400', 'bg-green-600 dark:bg-green-500'],
   user: ['text-green-600 dark:text-green-400', 'bg-green-600 dark:bg-green-500'],
 
-  // Tool use — blue
-  PreToolUse: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:Bash': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:Read': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:Write': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:Edit': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:Glob': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:Grep': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:WebSearch': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PreToolUse:WebFetch': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  PostToolUse: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  'PostToolUse:Bash': ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
-  PostToolUseFailure: ['text-red-600 dark:text-red-400', 'bg-red-600 dark:bg-red-500'],
+  // Tool use — blue (by tool name)
+  Bash: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  Read: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  Write: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  Edit: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  Glob: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  Grep: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  WebSearch: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  WebFetch: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+
+  // Generic tool fallbacks
+  _ToolDefault: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  _ToolSuccess: ['text-blue-600 dark:text-blue-400', 'bg-blue-600 dark:bg-blue-500'],
+  _ToolFailure: ['text-red-600 dark:text-red-400', 'bg-red-600 dark:bg-red-500'],
 
   // Agents — purple
-  'PreToolUse:Agent': ['text-purple-600 dark:text-purple-400', 'bg-purple-600 dark:bg-purple-500'],
-  'PostToolUse:Agent': ['text-purple-600 dark:text-purple-400', 'bg-purple-600 dark:bg-purple-500'],
+  Agent: ['text-purple-600 dark:text-purple-400', 'bg-purple-600 dark:bg-purple-500'],
   SubagentStart: ['text-purple-600 dark:text-purple-400', 'bg-purple-600 dark:bg-purple-500'],
   SubagentStop: ['text-purple-600 dark:text-purple-400', 'bg-purple-600 dark:bg-purple-500'],
   TeammateIdle: ['text-purple-600 dark:text-purple-400', 'bg-purple-600 dark:bg-purple-500'],
@@ -179,58 +179,66 @@ const eventColors: Record<string, [string, string]> = {
 
 const defaultEventColor: [string, string] = ['text-muted-foreground', 'bg-muted-foreground dark:bg-muted-foreground']
 
-export function getEventColor(subtype: string | null, toolName?: string | null): { iconColor: string; dotColor: string; customHex?: string } {
-  // Check user customizations first
-  const keys: string[] = []
-  if (subtype && toolName) keys.push(`${subtype}:${toolName}`)
-  if (subtype) keys.push(subtype)
+/**
+ * Resolve an event to its logical icon/color key.
+ * Tool events resolve by toolName (e.g., "Bash", "Edit").
+ * Non-tool events resolve by subtype (e.g., "SessionStart").
+ */
+export function resolveEventKey(subtype: string | null, toolName?: string | null): string {
+  const isTool = subtype === 'PreToolUse' || subtype === 'PostToolUse' || subtype === 'PostToolUseFailure'
+  if (isTool && toolName) return toolName
+  return subtype || 'unknown'
+}
 
-  for (const key of keys) {
-    const custom = getIconCustomization(key)
-    if (custom?.colorName === 'custom' && custom.customHex) {
-      return { iconColor: '', dotColor: '', customHex: custom.customHex }
-    }
-    if (custom?.colorName && COLOR_PRESETS[custom.colorName]) {
-      const preset = COLOR_PRESETS[custom.colorName]
-      return { iconColor: preset.iconColor, dotColor: preset.dotColor }
-    }
+/**
+ * Determine the tool fallback key based on the event subtype.
+ */
+function toolFallbackKey(subtype: string | null): string {
+  if (subtype === 'PostToolUseFailure') return '_ToolFailure'
+  if (subtype === 'PostToolUse') return '_ToolSuccess'
+  return '_ToolDefault'
+}
+
+export function getEventColor(subtype: string | null, toolName?: string | null): { iconColor: string; dotColor: string; customHex?: string } {
+  const key = resolveEventKey(subtype, toolName)
+  const isTool = subtype === 'PreToolUse' || subtype === 'PostToolUse' || subtype === 'PostToolUseFailure'
+
+  // Check user customizations first
+  const custom = getIconCustomization(key)
+  if (custom?.colorName === 'custom' && custom.customHex) {
+    return { iconColor: '', dotColor: '', customHex: custom.customHex }
+  }
+  if (custom?.colorName && COLOR_PRESETS[custom.colorName]) {
+    const preset = COLOR_PRESETS[custom.colorName]
+    return { iconColor: preset.iconColor, dotColor: preset.dotColor }
   }
 
   // Fall back to defaults
-  let color: [string, string] | undefined
-  if (subtype && toolName) {
-    color = eventColors[`${subtype}:${toolName}`]
-  }
-  if (!color && subtype) {
-    color = eventColors[subtype]
+  let color = eventColors[key]
+  if (!color && isTool) {
+    color = eventColors[toolFallbackKey(subtype)]
   }
   const [iconColor, dotColor] = color || defaultEventColor
   return { iconColor, dotColor }
 }
 
 export function getEventIcon(subtype: string | null, toolName?: string | null): LucideIcon {
+  const key = resolveEventKey(subtype, toolName)
+  const isTool = subtype === 'PreToolUse' || subtype === 'PostToolUse' || subtype === 'PostToolUseFailure'
+
   // Check user customizations first
-  if (subtype && toolName) {
-    const custom = getIconCustomization(`${subtype}:${toolName}`)
-    if (custom?.iconName) {
-      const icon = (allLucideIcons as Record<string, LucideIcon>)[custom.iconName]
-      if (icon) return icon
-    }
-  }
-  if (subtype) {
-    const custom = getIconCustomization(subtype)
-    if (custom?.iconName) {
-      const icon = (allLucideIcons as Record<string, LucideIcon>)[custom.iconName]
-      if (icon) return icon
-    }
+  const custom = getIconCustomization(key)
+  if (custom?.iconName) {
+    const icon = (allLucideIcons as Record<string, LucideIcon>)[custom.iconName]
+    if (icon) return icon
   }
 
   // Fall back to defaults
-  if (subtype && toolName && eventIcons[`${subtype}:${toolName}`]) {
-    return eventIcons[`${subtype}:${toolName}`]
+  if (eventIcons[key]) {
+    return eventIcons[key]
   }
-  if (subtype && eventIcons[subtype]) {
-    return eventIcons[subtype]
+  if (isTool) {
+    return eventIcons[toolFallbackKey(subtype)] || defaultEventIcon
   }
   return defaultEventIcon
 }
