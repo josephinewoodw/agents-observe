@@ -484,6 +484,29 @@ describe('parseRawEvent — hook format', () => {
     const result = parseRawEvent(raw)
     expect(result.toolUseId).toBe('toolu_12345')
   })
+
+  test('hook event — extracts transcript_path', () => {
+    const parsed = parseRawEvent({
+      hook_event_name: 'PreToolUse',
+      session_id: 'sess-1',
+      tool_name: 'Bash',
+      tool_input: { command: 'ls' },
+      transcript_path: '/Users/joe/.claude/projects/-Users-joe-my-app/sess-1.jsonl',
+      timestamp: 1000,
+    })
+    expect(parsed.transcriptPath).toBe(
+      '/Users/joe/.claude/projects/-Users-joe-my-app/sess-1.jsonl',
+    )
+  })
+
+  test('hook event — transcriptPath is null when not present', () => {
+    const parsed = parseRawEvent({
+      hook_event_name: 'Stop',
+      session_id: 'sess-1',
+      timestamp: 1000,
+    })
+    expect(parsed.transcriptPath).toBeNull()
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -529,10 +552,9 @@ describe('parseRawEvent — common behavior', () => {
     expect(result.metadata).toEqual({})
   })
 
-  test('defaults projectName to "unknown" when missing', () => {
-    const raw = { session_id: 'sess', type: 'user', timestamp: 1711411200000 }
-    const result = parseRawEvent(raw)
-    expect(result.projectName).toBe('unknown')
+  test('projectName defaults to null when not present', () => {
+    const parsed = parseRawEvent({ hook_event_name: 'Stop', session_id: 'x' })
+    expect(parsed.projectName).toBeNull()
   })
 
   test('falls back to sessionId field when session_id is absent', () => {

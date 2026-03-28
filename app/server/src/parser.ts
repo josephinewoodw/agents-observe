@@ -3,9 +3,10 @@
 // NO formatting, NO truncation, NO summary generation — that's the client's job.
 
 export interface ParsedRawEvent {
-  projectName: string
+  projectName: string | null
   sessionId: string
   slug: string | null
+  transcriptPath: string | null
   type: string
   subtype: string | null
   toolName: string | null
@@ -21,9 +22,10 @@ export interface ParsedRawEvent {
 }
 
 export function parseRawEvent(raw: Record<string, unknown>): ParsedRawEvent {
-  const projectName = (raw.project_name as string) || 'unknown'
+  const projectName = (raw.project_name as string) || null
   const sessionId = (raw.session_id as string) || (raw.sessionId as string) || 'unknown'
   const slug = (raw.slug as string) || null
+  const transcriptPath = (raw.transcript_path as string) || null
   const timestamp = parseTimestamp(raw.timestamp)
   const toolUseId = (raw.tool_use_id as string) || null
   // agent_id is present on hook events fired from subagents
@@ -175,6 +177,7 @@ export function parseRawEvent(raw: Record<string, unknown>): ParsedRawEvent {
     projectName,
     sessionId,
     slug,
+    transcriptPath,
     type,
     subtype,
     toolName,
