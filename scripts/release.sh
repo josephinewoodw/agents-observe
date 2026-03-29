@@ -45,6 +45,9 @@ sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" .claude-plugin/
 # observe_cli.mjs — pin Docker image to this release tag
 sed -i '' "s|ghcr.io/simple10/claude-observe:[^'\"]*|ghcr.io/simple10/claude-observe:$TAG|" hooks/scripts/observe_cli.mjs
 
+# app/server/src/version.ts — server-side version constant
+sed -i '' "s/export const VERSION = '[^']*'/export const VERSION = '$VERSION'/" app/server/src/version.ts
+
 # ── Test and build ───────────────────────────────────────
 
 echo ""
@@ -59,7 +62,7 @@ docker build -t claude-observe:local .
 
 echo ""
 echo "Committing version bump..."
-git add package.json .claude-plugin/plugin.json hooks/scripts/observe_cli.mjs
+git add package.json .claude-plugin/plugin.json hooks/scripts/observe_cli.mjs app/server/src/version.ts
 git commit -m "release: v${VERSION}"
 
 echo "Tagging $TAG..."

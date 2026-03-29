@@ -51,6 +51,13 @@ const dockerImage =
   process.env.CLAUDE_OBSERVE_DOCKER_IMAGE || 'ghcr.io/simple10/claude-observe:v0.5.0'
 const dataDir = process.env.CLAUDE_OBSERVE_DATA_DIR || `${process.env.HOME}/.claude-observe/data`
 
+// Expected API identity — parsed from Docker image tag (e.g. "v0.5.0" → "0.5.0")
+const API_ID = 'claude-observe'
+const expectedVersion = (() => {
+  const match = dockerImage.match(/:v?(\d+\.\d+\.\d+)/)
+  return match ? match[1] : null
+})()
+
 // -- HTTP helpers -------------------------------------------------
 
 function httpRequest(url, options, body) {
@@ -239,11 +246,22 @@ async function serverStartCommand() {
     process.exit(1)
   }
 
-  // Check if already healthy
+  // Check if something is already running on the target port
   const healthResult = await getJson(`${apiBaseUrl}/health`)
   if (healthResult.status === 200 && healthResult.body?.ok) {
-    console.log(`Server already running. Dashboard: ${baseOrigin}`)
-    process.exit(0)
+    if (healthResult.body.id !== API_ID) {
+      // Port is taken by a different service — will auto-assign below
+      console.error(`[claude-observe] Port ${serverPort} is in use by another service, auto-assigning a free port...`)
+    } else if (expectedVersion && healthResult.body.version !== expectedVersion) {
+      // Our server but wrong version — stop it and restart
+      console.error(`[claude-observe] Server version mismatch: running ${healthResult.body.version}, expected ${expectedVersion}. Restarting...`)
+      await run('docker', ['stop', containerName])
+      await run('docker', ['rm', containerName])
+    } else {
+      // Our server, correct version — already running
+      console.log(`Server already running. Dashboard: ${baseOrigin}`)
+      process.exit(0)
+    }
   }
 
   // Ensure data directory
