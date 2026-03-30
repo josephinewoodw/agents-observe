@@ -16,6 +16,9 @@ RUN cd client && npm run build
 COPY app/server/src server/src
 COPY app/server/tsconfig.json server/
 
+# Copy VERSION file for /api/health endpoint
+COPY VERSION /app/VERSION
+
 EXPOSE 4981
 
 WORKDIR /app/server

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Release script for Claude Observe.
-# Bumps version in all files, commits, tags, and pushes.
+# Bumps version, commits, tags, and pushes.
 #
 # Usage: scripts/release.sh <version>
 #   e.g.  scripts/release.sh 0.6.0
@@ -36,17 +36,14 @@ echo "=== Releasing $TAG ==="
 
 echo "Bumping version to $VERSION..."
 
+# VERSION file (source of truth for server + CLI)
+echo "$VERSION" > VERSION
+
 # package.json (root)
 sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" package.json
 
-# .claude-plugin/plugin.json
+# .claude-plugin/plugin.json (static manifest — can't read files)
 sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" .claude-plugin/plugin.json
-
-# observe_cli.mjs — pin Docker image to this release tag
-sed -i '' "s|ghcr.io/simple10/claude-observe:[^'\"]*|ghcr.io/simple10/claude-observe:$TAG|" hooks/scripts/observe_cli.mjs
-
-# app/server/src/version.ts — server-side version constant
-sed -i '' "s/export const VERSION = '[^']*'/export const VERSION = '$VERSION'/" app/server/src/version.ts
 
 # ── Test and build ───────────────────────────────────────
 
@@ -62,7 +59,7 @@ docker build -t claude-observe:local .
 
 echo ""
 echo "Committing version bump..."
-git add package.json .claude-plugin/plugin.json hooks/scripts/observe_cli.mjs app/server/src/version.ts
+git add VERSION package.json .claude-plugin/plugin.json
 git commit -m "release: v${VERSION}"
 
 echo "Tagging $TAG..."

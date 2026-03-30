@@ -3,6 +3,8 @@
 // No dependencies - uses only Node.js built-ins.
 
 import { readFileSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const pluginDataDir = process.env.CLAUDE_PLUGIN_DATA || `${process.env.HOME}/.claude-observe`
 const mcpPortFile = `${pluginDataDir}/mcp-port`
@@ -10,6 +12,17 @@ const mcpPortFile = `${pluginDataDir}/mcp-port`
 function readMcpPort() {
   try {
     return readFileSync(mcpPortFile, 'utf8').trim() || null
+  } catch {
+    return null
+  }
+}
+
+function readVersion() {
+  // VERSION file is at repo root — 3 levels up from hooks/scripts/lib/
+  const dir = dirname(fileURLToPath(import.meta.url))
+  const versionFile = resolve(dir, '../../../VERSION')
+  try {
+    return readFileSync(versionFile, 'utf8').trim()
   } catch {
     return null
   }
@@ -26,10 +39,7 @@ export function getConfig(overrides = {}) {
     process.env.CLAUDE_OBSERVE_API_BASE_URL ||
     (savedPort ? `http://127.0.0.1:${savedPort}/api` : `http://127.0.0.1:${serverPort}/api`)
   const baseOrigin = new URL(apiBaseUrl).origin
-
-  const dockerImage =
-    process.env.CLAUDE_OBSERVE_DOCKER_IMAGE || 'ghcr.io/simple10/claude-observe:v0.5.0'
-  const versionMatch = dockerImage.match(/:v?(\d+\.\d+\.\d+)/)
+  const version = readVersion()
 
   return {
     serverPort,
@@ -39,9 +49,9 @@ export function getConfig(overrides = {}) {
     mcpPortFile,
     projectSlug: overrides.projectSlug || process.env.CLAUDE_OBSERVE_PROJECT_SLUG || null,
     containerName: process.env.CLAUDE_OBSERVE_DOCKER_CONTAINER_NAME || 'claude-observe',
-    dockerImage,
+    dockerImage: process.env.CLAUDE_OBSERVE_DOCKER_IMAGE || `ghcr.io/simple10/claude-observe:${version ? `v${version}` : 'latest'}`,
     dataDir: process.env.CLAUDE_OBSERVE_DATA_DIR || `${process.env.HOME}/.claude-observe/data`,
     API_ID: 'claude-observe',
-    expectedVersion: versionMatch ? versionMatch[1] : null,
+    expectedVersion: version,
   }
 }
