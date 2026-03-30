@@ -35,6 +35,7 @@ export function AgentLabel({ agent, parentAgent, className, disableTooltip, chil
           {agent.description && (
             <span>{agent.description}</span>
           )}
+          <span className="font-medium">{displayName}</span>
           {agent.agentType && (
             <span className="opacity-70">Type: {agent.agentType}</span>
           )}
