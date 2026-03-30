@@ -13,4 +13,4 @@ services:
     ports:
       - "${CLAUDE_OBSERVE_SERVER_PORT:-4981}:${CLAUDE_OBSERVE_SERVER_PORT:-4981}"
     volumes:
-      - ${DATA_DIR:-./data}:/data
+      - ${CLAUDE_OBSERVE_DATA_DIR:-./data}:/data

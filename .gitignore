@@ -3,6 +3,7 @@
 # TypeScript / JavaScript / Node
 node_modules/
 app/**/dist/
+*.tsbuildinfo
 
 # Bun
 bun.lockb
