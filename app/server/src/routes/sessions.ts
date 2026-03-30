@@ -76,17 +76,7 @@ router.get('/sessions/:id/agents', async (c) => {
     agentType: r.agent_type || null,
   }))
 
-  // Build tree
-  const agentMap = new Map(agents.map((a) => [a.id, { ...a, children: [] as Agent[] }]))
-  const roots: Agent[] = []
-  for (const agent of agentMap.values()) {
-    if (agent.parentAgentId && agentMap.has(agent.parentAgentId)) {
-      agentMap.get(agent.parentAgentId)!.children!.push(agent)
-    } else {
-      roots.push(agent)
-    }
-  }
-  return c.json(roots)
+  return c.json(agents)
 })
 
 // GET /sessions/:id/events

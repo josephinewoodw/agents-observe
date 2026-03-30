@@ -66,15 +66,10 @@ describe('getAgentDisplayName', () => {
 describe('buildAgentColorMap', () => {
   it('should assign sequential indices in depth-first order', () => {
     const agents: Agent[] = [
-      makeAgent({
-        id: 'root',
-        children: [
-          makeAgent({ id: 'child-1', parentAgentId: 'root', children: [
-            makeAgent({ id: 'grandchild-1', parentAgentId: 'child-1' }),
-          ]}),
-          makeAgent({ id: 'child-2', parentAgentId: 'root' }),
-        ],
-      }),
+      makeAgent({ id: 'root' }),
+      makeAgent({ id: 'child-1', parentAgentId: 'root' }),
+      makeAgent({ id: 'grandchild-1', parentAgentId: 'child-1' }),
+      makeAgent({ id: 'child-2', parentAgentId: 'root' }),
     ]
 
     const map = buildAgentColorMap(agents)

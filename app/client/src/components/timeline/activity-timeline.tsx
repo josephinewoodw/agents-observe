@@ -41,21 +41,17 @@ export function ActivityTimeline() {
   }, [eventsLength])
 
   const flatAgents = useMemo(() => {
+    if (!agents) return []
     const mainAgents: { agent: Agent; isSubagent: boolean }[] = []
     const nonMainAgents: { agent: Agent; isSubagent: boolean }[] = []
-    function collect(list: Agent[] | undefined, isSub: boolean) {
-      list?.forEach((a) => {
-        if (selectedAgentIds.length === 0 || selectedAgentIds.includes(a.id)) {
-          if (!isSub) {
-            mainAgents.push({ agent: a, isSubagent: false })
-          } else {
-            nonMainAgents.push({ agent: a, isSubagent: true })
-          }
-        }
-        if (a.children) collect(a.children, true)
-      })
+    for (const a of agents) {
+      if (selectedAgentIds.length > 0 && !selectedAgentIds.includes(a.id)) continue
+      if (!a.parentAgentId) {
+        mainAgents.push({ agent: a, isSubagent: false })
+      } else {
+        nonMainAgents.push({ agent: a, isSubagent: true })
+      }
     }
-    collect(agents, false)
     // Reverse non-main agents so newest appear right after Main
     nonMainAgents.reverse()
     return [...mainAgents, ...nonMainAgents]

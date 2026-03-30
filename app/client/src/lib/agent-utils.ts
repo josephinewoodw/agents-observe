@@ -81,14 +81,17 @@ const AGENT_COLORS: AgentColorClasses[] = [
  */
 export function buildAgentColorMap(agents: Agent[] | undefined): Map<string, number> {
   const map = new Map<string, number>()
+  if (!agents) return map
   let idx = 0
-  function collect(list: Agent[] | undefined) {
-    list?.forEach((a) => {
-      map.set(a.id, idx++)
-      if (a.children) collect(a.children)
-    })
+  function visit(parentId: string | null) {
+    for (const a of agents!) {
+      if (a.parentAgentId === parentId) {
+        map.set(a.id, idx++)
+        visit(a.id)
+      }
+    }
   }
-  collect(agents)
+  visit(null)
   return map
 }
 

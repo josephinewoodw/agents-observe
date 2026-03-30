@@ -40,17 +40,9 @@ export function AgentCombobox() {
   const [open, setOpen] = useState(false)
   const snapshotRef = useRef<Agent[]>([])
 
-  // Flatten agent tree
   const allAgents = useMemo(() => {
-    const flat: Agent[] = []
-    function collect(list: Agent[] | undefined) {
-      list?.forEach((a) => {
-        flat.push(a)
-        if (a.children) collect(a.children)
-      })
-    }
-    collect(agents)
-    return flat.filter((a) => (a.eventCount ?? 0) > 0)
+    if (!agents) return []
+    return agents.filter((a) => (a.eventCount ?? 0) > 0)
   }, [agents])
 
   // Snapshot the sorted order when the popover opens so it doesn't

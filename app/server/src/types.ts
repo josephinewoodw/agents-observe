@@ -75,7 +75,6 @@ export interface Agent {
   status: string
   startedAt: number
   stoppedAt: number | null
-  children?: Agent[]
   eventCount?: number
 }
 

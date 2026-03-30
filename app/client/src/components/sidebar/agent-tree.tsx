@@ -16,20 +16,24 @@ export function AgentTree({ sessionId }: AgentTreeProps) {
     return <div className="text-xs text-muted-foreground py-1">No agents</div>
   }
 
+  // Roots are agents with no parent
+  const roots = agents.filter((a) => !a.parentAgentId)
+
   return (
     <div className="space-y-0.5">
-      {agents.map((agent) => (
-        <AgentNode key={agent.id} agent={agent} depth={0} />
+      {roots.map((agent) => (
+        <AgentNode key={agent.id} agent={agent} agents={agents} depth={0} />
       ))}
     </div>
   )
 }
 
-function AgentNode({ agent, depth }: { agent: Agent; depth: number }) {
+function AgentNode({ agent, agents, depth }: { agent: Agent; agents: Agent[]; depth: number }) {
   const { selectedAgentIds, toggleAgentId } = useUIStore()
   const isSelected = selectedAgentIds.includes(agent.id)
   const displayName = agent.slug || agent.name || agent.id.slice(0, 8)
   const isSubagent = depth > 0
+  const children = agents.filter((a) => a.parentAgentId === agent.id)
 
   return (
     <>
@@ -57,8 +61,8 @@ function AgentNode({ agent, depth }: { agent: Agent; depth: number }) {
           </Badge>
         )}
       </button>
-      {agent.children?.map((child) => (
-        <AgentNode key={child.id} agent={child} depth={depth + 1} />
+      {children.map((child) => (
+        <AgentNode key={child.id} agent={child} agents={agents} depth={depth + 1} />
       ))}
     </>
   )

@@ -36,13 +36,7 @@ export function EventStream() {
 
   const agentMap = useMemo(() => {
     const map = new Map<string, Agent>()
-    function collect(list: Agent[] | undefined) {
-      list?.forEach((a) => {
-        map.set(a.id, a)
-        if (a.children) collect(a.children)
-      })
-    }
-    collect(agents)
+    agents?.forEach((a) => map.set(a.id, a))
     return map
   }, [agents])
 
