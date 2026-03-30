@@ -20,17 +20,22 @@ export interface Session {
   eventCount?: number
 }
 
-export interface Agent {
+/** Agent metadata from the server — no derived state */
+export interface ServerAgent {
   id: string
   sessionId: string
   parentAgentId: string | null
   slug: string | null
   name: string | null
-  status: string
-  startedAt: number
-  stoppedAt: number | null
-  eventCount?: number
   agentType?: string | null
+}
+
+/** Agent with UI-derived state (computed from events) */
+export interface Agent extends ServerAgent {
+  status: 'active' | 'stopped'
+  eventCount: number
+  firstEventAt: number | null
+  lastEventAt: number | null
 }
 
 export interface ParsedEvent {
@@ -64,7 +69,6 @@ export interface RecentSession {
 
 export type WSMessage =
   | { type: 'event'; data: ParsedEvent }
-  | { type: 'agent_update'; data: Agent }
   | { type: 'session_update'; data: Session }
   | { type: 'project_update'; data: { id: number; name: string } }
 

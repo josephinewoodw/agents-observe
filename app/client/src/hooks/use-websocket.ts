@@ -1,8 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { WSMessage, WSClientMessage, ParsedEvent, Agent } from '@/types'
+import { API_BASE } from '@/config/api'
+import type { WSMessage, WSClientMessage, ParsedEvent } from '@/types'
 
 const WS_URL = `ws://${window.location.host}/api/events/stream`
+
+// Fetch log level from server once on module load
+let logLevel: 'debug' | 'trace' | 'none' = 'none'
+fetch(`${API_BASE}/health`)
+  .then((r) => r.json())
+  .then((data) => {
+    const level = (data.logLevel || '').toLowerCase()
+    if (level === 'trace') logLevel = 'trace'
+    else if (level === 'debug') logLevel = 'debug'
+  })
+  .catch(() => {})
 
 export function useWebSocket(sessionId: string | null) {
   const queryClient = useQueryClient()
@@ -24,14 +36,19 @@ export function useWebSocket(sessionId: string | null) {
     if (!connected) return
     if (sessionId) {
       sendMessage({ type: 'subscribe', sessionId })
+      if (logLevel === 'debug' || logLevel === 'trace') {
+        console.log(`[WS] Subscribing to session ${sessionId.slice(0, 8)}`)
+      }
     } else {
       sendMessage({ type: 'unsubscribe' })
+      if (logLevel === 'debug' || logLevel === 'trace') {
+        console.log('[WS] Unsubscribed (no session selected)')
+      }
     }
   }, [sessionId, connected, sendMessage])
 
   const handleMessage = useCallback((msg: WSMessage) => {
     if (msg.type === 'event') {
-      // Append directly to the events cache for the current session
       const event = msg.data as ParsedEvent
       const currentSessionId = sessionIdRef.current
       if (currentSessionId && event.sessionId === currentSessionId) {
@@ -39,27 +56,20 @@ export function useWebSocket(sessionId: string | null) {
           ['events', currentSessionId],
           (old) => old ? [...old, event] : [event],
         )
-      }
-    } else if (msg.type === 'agent_update') {
-      const agent = msg.data as Agent
-      const currentSessionId = sessionIdRef.current
-      if (currentSessionId && agent.sessionId === currentSessionId) {
-        queryClient.setQueryData<Agent[]>(
-          ['agents', currentSessionId],
-          (old) => {
-            if (!old) return [agent]
-            const exists = old.some((a) => a.id === agent.id)
-            if (exists) {
-              return old.map((a) => a.id === agent.id ? agent : a)
-            }
-            return [...old, agent]
-          },
-        )
+        if (logLevel === 'trace') {
+          console.debug(`[WS] Event appended: ${event.type}/${event.subtype}${event.toolName ? ` tool:${event.toolName}` : ''}`)
+        }
       }
     } else if (msg.type === 'session_update') {
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      if (logLevel === 'trace') {
+        console.debug('[WS] Session update → invalidating sessions cache')
+      }
     } else if (msg.type === 'project_update') {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      if (logLevel === 'trace') {
+        console.debug('[WS] Project update → invalidating projects cache')
+      }
     }
   }, [queryClient])
 
@@ -69,6 +79,9 @@ export function useWebSocket(sessionId: string | null) {
     }
 
     function connectWs() {
+      // Guard against duplicate connections (e.g. from StrictMode reconnect races)
+      if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return
+
       try {
         const ws = new WebSocket(WS_URL)
         wsRef.current = ws
@@ -80,6 +93,9 @@ export function useWebSocket(sessionId: string | null) {
           const sid = sessionIdRef.current
           if (sid) {
             ws.send(JSON.stringify({ type: 'subscribe', sessionId: sid }))
+            if (logLevel === 'debug' || logLevel === 'trace') {
+              console.log(`[WS] Subscribing to session ${sid.slice(0, 8)} (on connect)`)
+            }
           }
         }
 
@@ -91,6 +107,9 @@ export function useWebSocket(sessionId: string | null) {
         }
 
         ws.onclose = () => {
+          // Only handle if this is still the active connection — avoids
+          // clobbering a newer connection during StrictMode remount races
+          if (wsRef.current !== ws) return
           setConnected(false)
           wsRef.current = null
           console.log('[WS] Disconnected, retrying in 3s...')
