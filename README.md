@@ -76,7 +76,7 @@ Claude Code Hooks  →  observe_cli.mjs  →  API Server (SQLite)  →  React Da
     (dumb pipe)         (HTTP POST)        (parse + store)        (WebSocket live)
 ```
 
-The hook script is a dumb pipe — it reads the raw event from stdin, adds the project name, and POSTs it to the server. The server parses events, builds the agent hierarchy, and broadcasts to connected clients via WebSocket. The React dashboard consumes the API and renders the event stream, timeline, and filters.
+The hook script is a dumb pipe — it reads the raw event from stdin, adds the project name, and POSTs it to the server. The server parses events, stores agent metadata (name, type, parentage), and forwards events to subscribed WebSocket clients. The React dashboard derives all agent state (status, event counts, timing) from the event stream — the server is a dumb store.
 
 ## Standalone Installation
 
@@ -143,8 +143,7 @@ just install      # Install all dependencies
 just dev          # Start server + client in dev mode (hot reload)
 just dev-server   # Start only the server
 just dev-client   # Start only the client
-just test         # Run server tests
-just test-watch   # Run server tests in watch mode
+just test         # Run all tests (server + client)
 just test-event   # Send a test event to the server
 just fmt          # Format all source files
 
@@ -184,33 +183,48 @@ package.json                 # Version metadata
 app/
   server/                    # Node server — parses events, SQLite, WebSocket
     src/
-      index.ts               # HTTP routes + WebSocket
-      db.ts                  # SQLite schema + queries
+      index.ts               # Entry point — HTTP server + WebSocket attach
+      app.ts                 # Hono app — routes, CORS, static serving
+      websocket.ts           # Subscription-based WebSocket (per-session scoping)
       parser.ts              # Raw JSONL → structured event extraction
+      storage/
+        sqlite-adapter.ts    # SQLite schema + queries
+        types.ts             # Storage interfaces
+      routes/
+        events.ts            # POST /events (ingestion) + GET thread
+        sessions.ts          # Session + agent list endpoints
+        agents.ts            # Single agent + metadata endpoints
+        projects.ts          # Project CRUD
   client/                    # React 19 + shadcn dashboard
     src/
       components/
         sidebar/             # Project + session navigation
-        main-panel/          # Scope bar, filters
+        main-panel/          # Scope bar, filters, agent combobox
         timeline/            # Activity swim lanes
         event-stream/        # Event rows + detail expansion
+        shared/              # Shared components (AgentLabel tooltip)
       config/
-        event-icons.ts       # Emoji mapping (editable)
+        event-icons.ts       # Icon mapping (editable)
+        filters.ts           # Static + dynamic event filters
       lib/
         event-summary.ts     # Client-side summary generation
-        agent-utils.ts       # Agent display names
+        agent-utils.ts       # Agent display names + color mapping
+        api-client.ts        # REST API client
       stores/
         ui-store.ts          # Zustand UI state + URL routing
-      hooks/                 # TanStack Query data hooks + WebSocket
+      hooks/
+        use-websocket.ts     # WebSocket connection + event cache append
+        use-events.ts        # Events query (React Query)
+        use-agents.ts        # Agent state derived from events + server metadata
 ```
 
 ## How it works
 
 **Hooks** fire on every Claude Code event (tool calls, prompts, stops, subagent lifecycle). The hook script reads the raw event from stdin, adds the project name, and POSTs it to the server. If the server needs additional data (like the session's human-readable slug), it responds with a request — the hook reads it from the local transcript file and sends it back.
 
-**Server** receives raw events, extracts structural fields (type, tool name, agent ID), builds the agent hierarchy (parent → subagent relationships), stores everything in SQLite, and broadcasts new events to WebSocket clients. The server is the single source of truth — no formatting, no truncation, just raw data with structural indexes.
+**Server** receives raw events, extracts structural fields (type, tool name, agent ID), stores agent metadata (name, description, type, parentage), and saves everything in SQLite. Events are forwarded to WebSocket clients subscribed to the relevant session — each browser tab only receives events for the session it's viewing. The server tracks session status (active/stopped) but does not track agent status.
 
-**Client** fetches data via REST API, receives real-time updates via WebSocket, and handles all display logic (summaries, truncation, deduplication, filtering). Tool events are deduped client-side (PreToolUse + PostToolUse merged into a single row). The emoji icon mapping and summary generation are editable config files.
+**Client** fetches events via REST API on initial load, then receives real-time updates via WebSocket (events are appended to the local cache — no refetching). All agent state (status, event counts, timing) is derived from the event stream. Tool events are deduped client-side (PreToolUse + PostToolUse merged into a single row). The emoji icon mapping and summary generation are editable config files.
 
 ### Dev vs Production
 
@@ -247,7 +261,7 @@ Run `/observe status` to check if the server is running. If the container doesn'
 
 **WebSocket disconnected?**
 
-The client automatically falls back to polling every 3 seconds if the WebSocket connection fails. You'll see "Disconnected" in the sidebar — events still appear, just with a slight delay.
+The client reconnects automatically every 3 seconds if the WebSocket connection drops. You'll see "Disconnected" in the sidebar footer. Events received during reconnection will appear once the connection is restored and the events are refetched.
 
 **Database issues?**
 
@@ -255,7 +269,7 @@ Run `just db-reset` to delete the SQLite database and start fresh. The database 
 
 ## Reference
 
-- [Claude Hookds](https://code.claude.com/docs/en/hooks.md) - official list of currently supported hooks
+- [Claude Hooks](https://code.claude.com/docs/en/hooks.md) - official list of currently supported hooks
 
 ## Related Projects
 
