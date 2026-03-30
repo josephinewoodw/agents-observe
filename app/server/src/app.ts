@@ -11,7 +11,6 @@ import projectsRouter from './routes/projects'
 import sessionsRouter from './routes/sessions'
 import agentsRouter from './routes/agents'
 import adminRouter from './routes/admin'
-import pollRouter from './routes/poll'
 import healthRouter from './routes/health'
 
 type Env = { Variables: { store: EventStore; broadcast: (msg: object) => void } }
@@ -33,7 +32,6 @@ export function createApp(store: EventStore, broadcast: (msg: object) => void) {
   app.route('/api', sessionsRouter)
   app.route('/api', agentsRouter)
   app.route('/api', adminRouter)
-  app.route('/api', pollRouter)
   app.route('/api', healthRouter)
 
   // Serve built client static files when CLAUDE_OBSERVE_CLIENT_DIST_PATH is set
