@@ -51,6 +51,7 @@ export class SqliteAdapter implements EventStore {
         name TEXT,
         description TEXT,
         agent_type TEXT,
+        agent_class TEXT DEFAULT 'claude-code',
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (session_id) REFERENCES sessions(id),
