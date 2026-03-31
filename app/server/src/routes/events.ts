@@ -275,19 +275,6 @@ router.post('/events', async (c) => {
       }
     }
 
-    // On SubagentStop, request subagent slug from its transcript
-    if (
-      parsed.subtype === 'SubagentStop' &&
-      parsed.subAgentId &&
-      parsed.raw.agent_transcript_path
-    ) {
-      requests.push({
-        cmd: 'getSessionSlug',
-        args: { transcript_path: parsed.raw.agent_transcript_path },
-        callback: `/api/agents/${encodeURIComponent(parsed.subAgentId)}/metadata`,
-      })
-    }
-
     const responseBody: Record<string, unknown> = {
       status: 'OK',
       meta: {
