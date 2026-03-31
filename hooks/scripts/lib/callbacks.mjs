@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { postJson } from './http.mjs'
+
 /* Array of all available callbacks */
 export const ALL_CALLBACK_HANDLERS = ['getSessionSlug']
 
