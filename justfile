@@ -1,7 +1,7 @@
 # Claude Observe
 # Usage: just <recipe>
 #
-# CLAUDE_OBSERVE_SERVER_PORT & CLAUDE_OBSERVE_CLIENT_PORT are read from .env
+# AGENTS_OBSERVE_SERVER_PORT & AGENTS_OBSERVE_CLIENT_PORT are read from .env
 # Allows for overriding the default ports
 # Server port is used for both local dev & docker starts
 # Client port is only for local dev
@@ -10,8 +10,8 @@ set dotenv-load := true
 set export := true
 set quiet := true
 
-port := env("CLAUDE_OBSERVE_SERVER_PORT", "4981")
-dev_client_port := env("CLAUDE_OBSERVE_CLIENT_PORT", "5174")
+port := env("AGENTS_OBSERVE_SERVER_PORT", "4981")
+dev_client_port := env("AGENTS_OBSERVE_CLIENT_PORT", "5174")
 project_root := justfile_directory()
 server := project_root / "app" / "server"
 client := project_root / "app" / "client"
@@ -24,7 +24,7 @@ default:
 
 # Build the Docker image locally
 build:
-    docker build -t claude-observe:local .
+    docker build -t agents-observe:local .
 
 # Start production containers (detached)
 start:
@@ -92,7 +92,7 @@ test:
 # Send a test event to the server
 test-event:
     @echo '{"session_id":"test-1234","hook_event_name":"SessionStart","cwd":"/tmp","source":"new"}' \
-      | CLAUDE_OBSERVE_PROJECT_NAME=test-project node {{ project_root }}/hooks/scripts/observe_cli.mjs
+      | AGENTS_OBSERVE_PROJECT_NAME=test-project node {{ project_root }}/hooks/scripts/observe_cli.mjs
     @echo "Event sent"
 
 # ─── Database ────────────────────────────────────────────

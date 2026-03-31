@@ -1,7 +1,7 @@
 {
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "CLAUDE_OBSERVE_PROJECT_SLUG": "claude-observe"
+    "AGENTS_OBSERVE_PROJECT_SLUG": "agents-observe"
   },
   "hooks": {
     "PreToolUse": [

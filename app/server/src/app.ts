@@ -45,8 +45,8 @@ export function createApp(
   app.route('/api', adminRouter)
   app.route('/api', healthRouter)
 
-  // Serve built client static files when CLAUDE_OBSERVE_CLIENT_DIST_PATH is set
-  const clientDistPath = process.env.CLAUDE_OBSERVE_CLIENT_DIST_PATH
+  // Serve built client static files when AGENTS_OBSERVE_CLIENT_DIST_PATH is set
+  const clientDistPath = process.env.AGENTS_OBSERVE_CLIENT_DIST_PATH
   if (clientDistPath && fs.existsSync(clientDistPath)) {
     app.use('/*', serveStatic({ root: path.relative(process.cwd(), clientDistPath) }))
 

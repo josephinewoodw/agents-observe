@@ -11,7 +11,7 @@ type Env = {
   }
 }
 
-const LOG_LEVEL = process.env.CLAUDE_OBSERVE_LOG_LEVEL || 'debug'
+const LOG_LEVEL = process.env.AGENTS_OBSERVE_LOG_LEVEL || 'debug'
 
 const router = new Hono<Env>()
 

@@ -21,7 +21,7 @@ run('npm', ['run', 'build'], clientDir)
 
 // 3. Start server with client dist path set
 const clientDistPath = path.join(clientDir, 'dist')
-const port = process.env.CLAUDE_OBSERVE_SERVER_PORT || '4981'
+const port = process.env.AGENTS_OBSERVE_SERVER_PORT || '4981'
 
 console.log(`\nStarting server on http://localhost:${port} (API + UI)\n`)
 
@@ -30,8 +30,8 @@ const server = spawn('npx', ['tsx', 'src/index.ts'], {
   stdio: 'inherit',
   env: {
     ...process.env,
-    CLAUDE_OBSERVE_CLIENT_DIST_PATH: clientDistPath,
-    CLAUDE_OBSERVE_SERVER_PORT: port,
+    AGENTS_OBSERVE_CLIENT_DIST_PATH: clientDistPath,
+    AGENTS_OBSERVE_SERVER_PORT: port,
   },
 })
 

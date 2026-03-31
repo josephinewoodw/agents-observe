@@ -15,7 +15,7 @@ type Env = {
 
 const router = new Hono<Env>()
 
-const LOG_LEVEL = process.env.CLAUDE_OBSERVE_LOG_LEVEL || 'debug'
+const LOG_LEVEL = process.env.AGENTS_OBSERVE_LOG_LEVEL || 'debug'
 
 // Track root agent IDs per session (sessionId -> agentId)
 const sessionRootAgents = new Map<string, string>()
@@ -92,7 +92,7 @@ router.post('/events', async (c) => {
     if (existingSession) {
       effectiveProjectId = existingSession.project_id
     } else {
-      const projectSlugOverride = meta.env?.CLAUDE_OBSERVE_PROJECT_SLUG || null
+      const projectSlugOverride = meta.env?.AGENTS_OBSERVE_PROJECT_SLUG || null
       const resolved = await resolveProject(store, {
         sessionId: parsed.sessionId,
         slug: projectSlugOverride,

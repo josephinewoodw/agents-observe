@@ -8,7 +8,7 @@ import type { EventStore } from '../storage/types'
 
 type Env = { Variables: { store: EventStore } }
 
-const API_ID = 'claude-observe'
+const API_ID = 'agents-observe'
 
 // Read version from VERSION file — works in both dev (../../..) and Docker (/app/..)
 function readVersion(): string {
@@ -29,7 +29,7 @@ function readVersion(): string {
 }
 
 const VERSION = readVersion()
-const LOG_LEVEL = (process.env.CLAUDE_OBSERVE_LOG_LEVEL || 'debug').toLowerCase()
+const LOG_LEVEL = (process.env.AGENTS_OBSERVE_LOG_LEVEL || 'debug').toLowerCase()
 
 const router = new Hono<Env>()
 

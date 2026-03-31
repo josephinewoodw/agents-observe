@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // hooks/scripts/observe_cli.mjs
-// CLI entrypoint for Claude Observe plugin.
+// CLI entrypoint for Agents Observe plugin.
 // Commands: hook, health
 
 import { readFileSync } from 'node:fs'
@@ -27,7 +27,7 @@ switch (cliArgs.commands[0] || 'hook') {
 
 function hookCommand() {
   const allowedCallbacks = (() => {
-    const val = (process.env.CLAUDE_OBSERVE_ALLOW_LOCAL_CALLBACKS || 'all').trim().toLowerCase()
+    const val = (process.env.AGENTS_OBSERVE_ALLOW_LOCAL_CALLBACKS || 'all').trim().toLowerCase()
     if (val === 'all') return null
     return new Set(val.split(',').map((s) => s.trim()).filter(Boolean))
   })()
@@ -62,7 +62,7 @@ function hookCommand() {
     if (!Array.isArray(requests)) return
     for (const req of requests) {
       if (allowedCallbacks && !allowedCallbacks.has(req.cmd)) {
-        console.warn(`[claude-observe] Blocked callback: ${req.cmd} (not in CLAUDE_OBSERVE_ALLOW_LOCAL_CALLBACKS)`)
+        console.warn(`[agents-observe] Blocked callback: ${req.cmd} (not in AGENTS_OBSERVE_ALLOW_LOCAL_CALLBACKS)`)
         continue
       }
       const handler = callbackHandlers[req.cmd]
@@ -89,13 +89,13 @@ function hookCommand() {
 
     const envelope = { hook_payload: hookPayload, meta: { env: {} } }
     if (config.projectSlug) {
-      envelope.meta.env.CLAUDE_OBSERVE_PROJECT_SLUG = config.projectSlug
+      envelope.meta.env.AGENTS_OBSERVE_PROJECT_SLUG = config.projectSlug
     }
 
     const result = await postJson(`${config.apiBaseUrl}/events`, envelope)
 
     if (result.status === 0) {
-      console.warn(`[claude-observe] Server unreachable at ${config.baseOrigin}: ${result.error}`)
+      console.warn(`[agents-observe] Server unreachable at ${config.baseOrigin}: ${result.error}`)
       process.exit(0)
     }
 
@@ -111,13 +111,13 @@ async function healthCommand() {
   const result = await getJson(`${config.apiBaseUrl}/health`)
   if (result.status === 200 && result.body?.ok) {
     const ver = result.body.version ? ` (v${result.body.version})` : ''
-    console.log(`Claude Observe is running${ver}. Dashboard: ${config.baseOrigin}`)
+    console.log(`Agents Observe is running${ver}. Dashboard: ${config.baseOrigin}`)
     process.exit(0)
   } else if (result.status === 0) {
-    console.log(`Claude Observe server is not running at ${config.baseOrigin}`)
+    console.log(`Agents Observe server is not running at ${config.baseOrigin}`)
     process.exit(1)
   } else {
-    console.log(`Claude Observe server error: ${JSON.stringify(result.body)}`)
+    console.log(`Agents Observe server error: ${JSON.stringify(result.body)}`)
     process.exit(1)
   }
 }

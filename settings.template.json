@@ -1,6 +1,6 @@
 {
   "env": {
-    "CLAUDE_OBSERVE_PROJECT_SLUG": "__PROJECT_SLUG__"
+    "AGENTS_OBSERVE_PROJECT_SLUG": "__PROJECT_SLUG__"
   },
   "hooks": {
     "SessionStart": [

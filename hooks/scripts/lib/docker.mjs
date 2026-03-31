@@ -1,5 +1,5 @@
 // hooks/scripts/lib/docker.mjs
-// Docker container management for Claude Observe. Node.js built-ins only.
+// Docker container management for Agents Observe. Node.js built-ins only.
 
 import { execFile } from 'node:child_process'
 import { mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
@@ -38,7 +38,7 @@ export function removeMcpPort(config) {
 // -- Docker lifecycle ---------------------------------------------
 
 function log(msg) {
-  console.error(`[claude-observe] ${msg}`)
+  console.error(`[agents-observe] ${msg}`)
 }
 
 /**
@@ -96,9 +96,9 @@ export async function startServer(config) {
     'run', '-d',
     '--name', config.containerName,
     '-p', `${preferredPort}:${containerPort}`,
-    '-e', `CLAUDE_OBSERVE_SERVER_PORT=${containerPort}`,
-    '-e', 'CLAUDE_OBSERVE_DB_PATH=/data/observe.db',
-    '-e', 'CLAUDE_OBSERVE_CLIENT_DIST_PATH=/app/client/dist',
+    '-e', `AGENTS_OBSERVE_SERVER_PORT=${containerPort}`,
+    '-e', 'AGENTS_OBSERVE_DB_PATH=/data/observe.db',
+    '-e', 'AGENTS_OBSERVE_CLIENT_DIST_PATH=/app/client/dist',
     '-v', `${config.dataDir}:/data`,
     config.dockerImage,
   ])
@@ -112,9 +112,9 @@ export async function startServer(config) {
       'run', '-d',
       '--name', config.containerName,
       '-p', `0:${containerPort}`,
-      '-e', `CLAUDE_OBSERVE_SERVER_PORT=${containerPort}`,
-      '-e', 'CLAUDE_OBSERVE_DB_PATH=/data/observe.db',
-      '-e', 'CLAUDE_OBSERVE_CLIENT_DIST_PATH=/app/client/dist',
+      '-e', `AGENTS_OBSERVE_SERVER_PORT=${containerPort}`,
+      '-e', 'AGENTS_OBSERVE_DB_PATH=/data/observe.db',
+      '-e', 'AGENTS_OBSERVE_CLIENT_DIST_PATH=/app/client/dist',
         '-v', `${config.dataDir}:/data`,
       config.dockerImage,
     ])

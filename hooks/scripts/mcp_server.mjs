@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // hooks/scripts/mcp_server.mjs
-// MCP stdio server for Claude Observe plugin.
+// MCP stdio server for Agents Observe plugin.
 // Starts Docker container, then responds to MCP JSON-RPC protocol.
 
 import { createInterface } from 'node:readline'
@@ -8,16 +8,16 @@ import { getConfig } from './lib/config.mjs'
 import { startServer, stopServer } from './lib/docker.mjs'
 
 const config = getConfig()
-const persist = (process.env.CLAUDE_OBSERVE_SERVER_PERSIST || 'true').toLowerCase() !== 'false'
+const persist = (process.env.AGENTS_OBSERVE_SERVER_PERSIST || 'true').toLowerCase() !== 'false'
 
 async function main() {
   const actualPort = await startServer(config)
   if (!actualPort) {
-    console.error('[claude-observe] Failed to start server')
+    console.error('[agents-observe] Failed to start server')
     process.exit(1)
   }
 
-  console.error(`[claude-observe] Dashboard: http://127.0.0.1:${actualPort}`)
+  console.error(`[agents-observe] Dashboard: http://127.0.0.1:${actualPort}`)
 
   const cleanup = async () => {
     if (!persist) {
@@ -52,7 +52,7 @@ function handleMessage(msg) {
         protocolVersion: msg.params?.protocolVersion || '2024-11-05',
         capabilities: {},
         serverInfo: {
-          name: 'claude-observe',
+          name: 'agents-observe',
           version: config.expectedVersion || '0.0.0',
         },
       },
