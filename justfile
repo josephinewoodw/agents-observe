@@ -27,7 +27,7 @@ default:
 build:
     docker build -t agents-observe:local .
 
-# Start production containers (detached)
+# Start docker container (detached)
 start:
     @mkdir -p {{ project_root }}/data
     @docker compose down >/dev/null 2>&1 || true
@@ -43,6 +43,11 @@ start:
     done
     @just open
 
+# Start the server locally without docker
+start-local:
+    @mkdir -p {{ project_root }}/data
+    npm run start
+
 # Stop containers
 stop:
     docker compose down
@@ -56,7 +61,7 @@ logs:
 
 # ─── Development ─────────────────────────────────────────
 
-# Start server + client in dev mode (hot reload)
+# Start local server + client in dev mode (hot reload)
 dev:
     #!/usr/bin/env bash
     echo "Starting dev server + client..."

@@ -149,20 +149,27 @@ If you have [just](https://github.com/casey/just) installed:
 just install      # Install all dependencies
 just dev          # Start server + client in dev mode (hot reload)
 just dev-server   # Start only the server
-just dev-client   # Start only the client
-just test         # Run all tests (server + client)
+just dev-client       # Start only the client
+just dev-client-build # Build the client for production
+just test             # Run all tests (server + client)
 just test-event   # Send a test event to the server
 just fmt          # Format all source files
 
 # Docker Container Commands:
+just build        # Build the Docker image locally
 just start        # Start production containers (Docker, detached)
 just stop         # Stop Docker containers
 just restart      # Restart Docker containers
 just logs         # Follow Docker container logs
 
+# Local Server Commands:
+just start-local  # Builds client and runs local server (without docker)
+npm run start     # Same as `just start-local`
+
 # Setup & Utilities:
 just setup-hooks <name>  # Generate hooks config for a project
 just health              # Check server health
+just cli <command>       # Run the CLI (hook, health, start, stop, restart)
 just db-reset            # Delete the events database
 just open                # Open the dashboard in browser
 ```
@@ -170,59 +177,27 @@ just open                # Open the dashboard in browser
 ## Project structure
 
 ```text
+app/
+  server/                    # Node server — Hono routes, SQLite, WebSocket
+  client/                    # React 19 + shadcn dashboard
 hooks/
   hooks.json                 # Plugin hook definitions
-  scripts/
-    observe_cli.mjs          # CLI — hook forwarding + health check
-    mcp_server.mjs           # MCP stdio server — Docker lifecycle + JSON-RPC
-    lib/
-      config.mjs             # Shared config resolution
-      http.mjs               # HTTP helpers (getJson, postJson)
-      docker.mjs             # Docker container management
-skills/
-  observe/                   # /observe skill
-  observe-status/            # /observe status skill
-.claude-plugin/
-  plugin.json                # Plugin manifest
-  marketplace.json           # Self-hosted marketplace manifest
+  scripts/                   # CLI, MCP server, and shared libs
+skills/                      # /observe and /observe status skills
+scripts/                     # Release tooling
+test/                        # Integration tests
+data/                        # SQLite database (auto-created)
+docs/                        # Screenshots and demo assets
+.claude-plugin/              # Plugin + marketplace manifests
+.env                         # Env config options used by cli & local server
 .mcp.json                    # MCP server configuration
-package.json                 # Version metadata
-app/
-  server/                    # Node server — parses events, SQLite, WebSocket
-    src/
-      index.ts               # Entry point — HTTP server + WebSocket attach
-      app.ts                 # Hono app — routes, CORS, static serving
-      websocket.ts           # Subscription-based WebSocket (per-session scoping)
-      parser.ts              # Raw JSONL → structured event extraction
-      storage/
-        sqlite-adapter.ts    # SQLite schema + queries
-        types.ts             # Storage interfaces
-      routes/
-        events.ts            # POST /events (ingestion) + GET thread
-        sessions.ts          # Session + agent list endpoints
-        agents.ts            # Single agent + metadata endpoints
-        projects.ts          # Project CRUD
-  client/                    # React 19 + shadcn dashboard
-    src/
-      components/
-        sidebar/             # Project + session navigation
-        main-panel/          # Scope bar, filters, agent combobox
-        timeline/            # Activity swim lanes
-        event-stream/        # Event rows + detail expansion
-        shared/              # Shared components (AgentLabel tooltip)
-      config/
-        event-icons.ts       # Icon mapping (editable)
-        filters.ts           # Static + dynamic event filters
-      lib/
-        event-summary.ts     # Client-side summary generation
-        agent-utils.ts       # Agent display names + color mapping
-        api-client.ts        # REST API client
-      stores/
-        ui-store.ts          # Zustand UI state + URL routing
-      hooks/
-        use-websocket.ts     # WebSocket connection + event cache append
-        use-events.ts        # Events query (React Query)
-        use-agents.ts        # Agent state derived from events + server metadata
+Dockerfile                   # Production container image
+docker-compose.yml           # Container orchestration
+justfile                     # Task runner commands
+start.mjs                    # Docker container entrypoint
+settings.template.json       # Hooks config template for setup-hooks
+vitest.config.ts             # Test configuration
+package.json                 # Version metadata and workspace scripts
 ```
 
 ## How it works
