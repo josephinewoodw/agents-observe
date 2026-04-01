@@ -16,6 +16,7 @@ project_root := justfile_directory()
 server := project_root / "app" / "server"
 client := project_root / "app" / "client"
 cli_script := project_root / "hooks" / "scripts" / "observe_cli.mjs"
+hook_script := project_root / "hooks" / "scripts" / "hook.sh"
 
 # List available recipes
 default:
@@ -115,7 +116,7 @@ db-reset:
 # Generate hooks config for a project's .claude/settings.json
 setup-hooks project_slug:
     #!/usr/bin/env bash
-    hook_script="{{ cli_script }}"
+    hook_script="{{ hook_script }}"
     sed \
       -e "s|__PROJECT_SLUG__|{{ project_slug }}|g" \
       -e "s|__HOOK_SCRIPT__|${hook_script}|g" \
