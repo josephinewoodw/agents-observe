@@ -121,6 +121,63 @@ router.get('/sessions/:id/events', async (c) => {
   return c.json(events)
 })
 
+// GET /sessions/:id/usage
+router.get('/sessions/:id/usage', async (c) => {
+  const store = c.get('store')
+  const sessionId = decodeURIComponent(c.req.param('id'))
+  const row = await store.getSessionUsage(sessionId)
+  if (!row) return c.json(null)
+  return c.json({
+    sessionId: row.session_id,
+    inputTokens: row.input_tokens,
+    outputTokens: row.output_tokens,
+    cacheReadTokens: row.cache_read_tokens,
+    cacheCreationTokens: row.cache_creation_tokens,
+    totalCostUsd: row.total_cost_usd,
+    updatedAt: row.updated_at,
+  })
+})
+
+// POST /sessions/:id/usage
+router.post('/sessions/:id/usage', async (c) => {
+  const store = c.get('store')
+  const broadcastToSession = c.get('broadcastToSession')
+
+  try {
+    const sessionId = decodeURIComponent(c.req.param('id'))
+    const data = (await c.req.json()) as Record<string, unknown>
+
+    if (LOG_LEVEL === 'debug') {
+      console.log(`[USAGE] Session ${sessionId.slice(0, 8)} tokens: in=${data.inputTokens} out=${data.outputTokens} cache_read=${data.cacheReadTokens} cache_create=${data.cacheCreationTokens}`)
+    }
+
+    await store.upsertSessionUsage(sessionId, {
+      inputTokens: (data.inputTokens as number) || 0,
+      outputTokens: (data.outputTokens as number) || 0,
+      cacheReadTokens: (data.cacheReadTokens as number) || 0,
+      cacheCreationTokens: (data.cacheCreationTokens as number) || 0,
+      totalCostUsd: (data.totalCostUsd as number) || null,
+    })
+
+    // Broadcast usage update to subscribed clients
+    broadcastToSession(sessionId, {
+      type: 'usage_update',
+      data: {
+        sessionId,
+        inputTokens: (data.inputTokens as number) || 0,
+        outputTokens: (data.outputTokens as number) || 0,
+        cacheReadTokens: (data.cacheReadTokens as number) || 0,
+        cacheCreationTokens: (data.cacheCreationTokens as number) || 0,
+        totalCostUsd: (data.totalCostUsd as number) || null,
+      },
+    })
+
+    return c.json({ ok: true })
+  } catch {
+    return c.json({ error: 'Invalid request' }, 400)
+  }
+})
+
 // POST /sessions/:id/metadata
 router.post('/sessions/:id/metadata', async (c) => {
   const store = c.get('store')

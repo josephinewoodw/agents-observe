@@ -77,6 +77,18 @@ export class SqliteAdapter implements EventStore {
       )
     `)
 
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS session_usage (
+        session_id TEXT PRIMARY KEY REFERENCES sessions(id),
+        input_tokens INTEGER NOT NULL DEFAULT 0,
+        output_tokens INTEGER NOT NULL DEFAULT 0,
+        cache_read_tokens INTEGER NOT NULL DEFAULT 0,
+        cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
+        total_cost_usd REAL,
+        updated_at INTEGER NOT NULL
+      )
+    `)
+
     // Create indexes
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_projects_slug ON projects(slug)')
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_projects_transcript_path ON projects(transcript_path)')
@@ -306,7 +318,10 @@ export class SqliteAdapter implements EventStore {
       params.push(term, term)
     }
 
-    sql += ' ORDER BY timestamp ASC'
+    // When limit is set without offset, sort DESC to get the most recent events,
+    // then reverse the results to maintain chronological order
+    const useDescForRecent = !!(filters?.limit && !filters?.offset)
+    sql += useDescForRecent ? ' ORDER BY timestamp DESC' : ' ORDER BY timestamp ASC'
 
     if (filters?.limit) {
       sql += ' LIMIT ?'
@@ -317,7 +332,8 @@ export class SqliteAdapter implements EventStore {
       }
     }
 
-    return this.db.prepare(sql).all(...params) as StoredEvent[]
+    const rows = this.db.prepare(sql).all(...params) as StoredEvent[]
+    return useDescForRecent ? rows.reverse() : rows
   }
 
   async getEventsForAgent(agentId: string): Promise<StoredEvent[]> {
@@ -447,6 +463,59 @@ export class SqliteAdapter implements EventStore {
     `,
       )
       .all(limit)
+  }
+
+  async upsertSessionUsage(
+    sessionId: string,
+    usage: {
+      inputTokens: number
+      outputTokens: number
+      cacheReadTokens: number
+      cacheCreationTokens: number
+      totalCostUsd?: number | null
+    },
+  ): Promise<void> {
+    const now = Date.now()
+    this.db
+      .prepare(
+        `
+      INSERT INTO session_usage (session_id, input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens, total_cost_usd, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(session_id) DO UPDATE SET
+        input_tokens = excluded.input_tokens,
+        output_tokens = excluded.output_tokens,
+        cache_read_tokens = excluded.cache_read_tokens,
+        cache_creation_tokens = excluded.cache_creation_tokens,
+        total_cost_usd = COALESCE(excluded.total_cost_usd, session_usage.total_cost_usd),
+        updated_at = ?
+    `,
+      )
+      .run(
+        sessionId,
+        usage.inputTokens,
+        usage.outputTokens,
+        usage.cacheReadTokens,
+        usage.cacheCreationTokens,
+        usage.totalCostUsd ?? null,
+        now,
+        now,
+      )
+  }
+
+  async getSessionUsage(sessionId: string): Promise<any | null> {
+    return (
+      this.db
+        .prepare('SELECT * FROM session_usage WHERE session_id = ?')
+        .get(sessionId) || null
+    )
+  }
+
+  async getUsageForSessions(sessionIds: string[]): Promise<any[]> {
+    if (sessionIds.length === 0) return []
+    const placeholders = sessionIds.map(() => '?').join(',')
+    return this.db
+      .prepare(`SELECT * FROM session_usage WHERE session_id IN (${placeholders})`)
+      .all(...sessionIds)
   }
 
   async healthCheck(): Promise<{ ok: boolean; error?: string }> {

@@ -96,10 +96,20 @@ export interface ParsedEvent {
 
 // === WebSocket Message Types ===
 
+export interface SessionUsage {
+  sessionId: string
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens: number
+  cacheCreationTokens: number
+  totalCostUsd: number | null
+}
+
 export type WSMessage =
   | { type: 'event'; data: ParsedEvent }
   | { type: 'session_update'; data: Session }
   | { type: 'project_update'; data: { id: number; name: string } }
+  | { type: 'usage_update'; data: SessionUsage }
 
 // Messages FROM clients
 export type WSClientMessage =

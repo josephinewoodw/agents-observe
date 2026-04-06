@@ -2,11 +2,13 @@ import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useProjects } from '@/hooks/use-projects'
 import { useSessions } from '@/hooks/use-sessions'
 import { useEvents } from '@/hooks/use-events'
+import { useSessionUsage } from '@/hooks/use-session-usage'
 import { useUIStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
 import { ChevronDown, ChevronRight, Folder, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { TokenBadge } from '@/components/shared/token-badge'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api-client'
 import type { Session } from '@/types'
@@ -238,6 +240,7 @@ function SessionList({ projectId }: { projectId: number }) {
   const { selectedSessionId, setSelectedSessionId } = useUIStore()
   const queryClient = useQueryClient()
   const { data: currentEvents } = useEvents(selectedSessionId)
+  const { data: selectedUsage } = useSessionUsage(selectedSessionId)
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
@@ -359,6 +362,17 @@ function SessionList({ projectId }: { projectId: number }) {
                     {cwd && (
                       <div className="px-2 pb-0.5 text-[10px] text-muted-foreground/70 dark:text-muted-foreground/50 truncate">
                         {shortenCwd(cwd)}
+                      </div>
+                    )}
+                    {isSelected && selectedUsage && (
+                      <div className="px-2 pb-0.5">
+                        <TokenBadge
+                          inputTokens={selectedUsage.inputTokens}
+                          outputTokens={selectedUsage.outputTokens}
+                          cacheReadTokens={selectedUsage.cacheReadTokens}
+                          cacheCreationTokens={selectedUsage.cacheCreationTokens}
+                          compact
+                        />
                       </div>
                     )}
                   </div>

@@ -76,5 +76,17 @@ export interface EventStore {
   clearAllData(): Promise<void>
   clearSessionEvents(sessionId: string): Promise<void>
   getRecentSessions(limit?: number): Promise<any[]>
+  upsertSessionUsage(
+    sessionId: string,
+    usage: {
+      inputTokens: number
+      outputTokens: number
+      cacheReadTokens: number
+      cacheCreationTokens: number
+      totalCostUsd?: number | null
+    },
+  ): Promise<void>
+  getSessionUsage(sessionId: string): Promise<any | null>
+  getUsageForSessions(sessionIds: string[]): Promise<any[]>
   healthCheck(): Promise<{ ok: boolean; error?: string }>
 }

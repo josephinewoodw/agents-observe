@@ -275,6 +275,15 @@ router.post('/events', async (c) => {
       }
     }
 
+    // On Stop events, request token usage from transcript
+    if (parsed.subtype === 'Stop' && parsed.raw.transcript_path) {
+      requests.push({
+        cmd: 'getSessionUsage',
+        args: { transcript_path: parsed.raw.transcript_path },
+        callback: `/api/sessions/${encodeURIComponent(parsed.sessionId)}/usage`,
+      })
+    }
+
     const responseBody: Record<string, unknown> = {
       status: 'OK',
       meta: {

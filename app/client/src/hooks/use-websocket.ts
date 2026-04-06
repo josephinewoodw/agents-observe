@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { API_BASE } from '@/config/api'
-import type { WSMessage, WSClientMessage, ParsedEvent } from '@/types'
+import type { WSMessage, WSClientMessage, ParsedEvent, SessionUsage } from '@/types'
 
 const WS_URL = `ws://${window.location.host}/api/events/stream`
 
@@ -69,6 +69,15 @@ export function useWebSocket(sessionId: string | null) {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       if (logLevel === 'trace') {
         console.debug('[WS] Project update → invalidating projects cache')
+      }
+    } else if (msg.type === 'usage_update') {
+      const usage = msg.data as SessionUsage
+      queryClient.setQueryData<SessionUsage | null>(
+        ['sessionUsage', usage.sessionId],
+        usage,
+      )
+      if (logLevel === 'debug' || logLevel === 'trace') {
+        console.debug(`[WS] Usage update for session ${usage.sessionId.slice(0, 8)}: in=${usage.inputTokens} out=${usage.outputTokens}`)
       }
     }
   }, [queryClient])

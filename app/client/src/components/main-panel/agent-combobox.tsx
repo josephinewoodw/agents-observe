@@ -17,7 +17,9 @@ import {
   CommandItem,
   CommandSeparator,
 } from '@/components/ui/command'
-import { Bot, Check, ChevronDown, X, Users, Copy } from 'lucide-react'
+import { Bot, Check, ChevronDown, X, Users, Copy, Zap } from 'lucide-react'
+import { computeAgentUsageFromEvents, formatTokenCount } from '@/lib/usage-utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { Agent } from '@/types'
 
 function formatRuntime(agent: Agent): string {
@@ -68,6 +70,7 @@ export function AgentCombobox() {
 
   const agentColorMap = useMemo(() => buildAgentColorMap(agents), [agents])
   const agentMap = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents])
+  const agentUsageMap = useMemo(() => events ? computeAgentUsageFromEvents(events) : new Map(), [events])
 
   const activeCount = agents.filter((a) => a.status === 'active').length
   const selectedAgents = agents.filter((a) => selectedAgentIds.includes(a.id))
@@ -129,6 +132,7 @@ export function AgentCombobox() {
                   const isSelected = selectedAgentIds.includes(agent.id)
                   const isMain = !agent.parentAgentId
                   const agentColor = getAgentColorById(agent.id, agentColorMap)
+                  const agentUsage = agentUsageMap.get(agent.id)
 
                   return (
                     <CommandItem
@@ -176,6 +180,38 @@ export function AgentCombobox() {
                         <Badge variant="outline" className="text-[9px] h-3.5 px-1">
                           {agent.eventCount}
                         </Badge>
+                        {agentUsage && agentUsage.totalTokens > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-0.5 font-mono text-[9px] text-muted-foreground/60">
+                                <Zap className="h-2.5 w-2.5" />
+                                {formatTokenCount(agentUsage.totalTokens)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-xs">
+                              <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                                <span className="text-muted-foreground">Input:</span>
+                                <span className="text-right font-mono">{agentUsage.inputTokens.toLocaleString()}</span>
+                                <span className="text-muted-foreground">Output:</span>
+                                <span className="text-right font-mono">{agentUsage.outputTokens.toLocaleString()}</span>
+                                {agentUsage.cacheReadTokens > 0 && (
+                                  <>
+                                    <span className="text-muted-foreground">Cache read:</span>
+                                    <span className="text-right font-mono">{agentUsage.cacheReadTokens.toLocaleString()}</span>
+                                  </>
+                                )}
+                                <span className="text-muted-foreground">Tools:</span>
+                                <span className="text-right font-mono">{agentUsage.totalToolUseCount}</span>
+                                <span className="text-muted-foreground">Duration:</span>
+                                <span className="text-right font-mono">
+                                  {agentUsage.totalDurationMs >= 60_000
+                                    ? `${(agentUsage.totalDurationMs / 60_000).toFixed(1)}m`
+                                    : `${(agentUsage.totalDurationMs / 1_000).toFixed(1)}s`}
+                                </span>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                         <button
                           className="opacity-40 hover:opacity-100 transition-opacity"
                           title="Copy agent ID"

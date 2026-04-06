@@ -1,5 +1,5 @@
 import { API_BASE } from '@/config/api';
-import type { Project, Session, RecentSession, ServerAgent, ParsedEvent } from '@/types';
+import type { Project, Session, RecentSession, ServerAgent, ParsedEvent, SessionUsage } from '@/types';
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, init);
@@ -70,4 +70,6 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     }),
+  getSessionUsage: (sessionId: string) =>
+    fetchJson<SessionUsage | null>(`/sessions/${encodeURIComponent(sessionId)}/usage`),
 };

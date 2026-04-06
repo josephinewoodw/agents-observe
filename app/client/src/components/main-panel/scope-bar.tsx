@@ -2,6 +2,8 @@ import { useUIStore } from '@/stores/ui-store'
 import { Button } from '@/components/ui/button'
 import { LogsModal } from './logs-modal'
 import { AgentCombobox } from './agent-combobox'
+import { TokenBadge } from '@/components/shared/token-badge'
+import { useSessionUsage } from '@/hooks/use-session-usage'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,12 +36,22 @@ export function ScopeBar() {
     requestExpandAll,
   } = useUIStore()
   const queryClient = useQueryClient()
+  const { data: sessionUsage } = useSessionUsage(selectedSessionId)
 
   if (!selectedProjectId || !selectedSessionId) return null
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 border-b border-border min-h-[40px]">
       <AgentCombobox />
+
+      {sessionUsage && (
+        <TokenBadge
+          inputTokens={sessionUsage.inputTokens}
+          outputTokens={sessionUsage.outputTokens}
+          cacheReadTokens={sessionUsage.cacheReadTokens}
+          cacheCreationTokens={sessionUsage.cacheCreationTokens}
+        />
+      )}
 
       <div className="flex items-center gap-1 shrink-0">
         <LogsModal />

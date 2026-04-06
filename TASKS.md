@@ -42,6 +42,12 @@
   - Fixed with toolUseId-keyed map, per-session FIFO queue, and named-agents tracking set
 - [x] Add 60m option to Activity Timeline
 - [x] Group sidebar sessions by relative date (Today, Yesterday, This Week, Last Week, then by month)
+- [x] Track token & context window usage per session and agent
+  - On Stop hook, server requests `getSessionUsage` callback — CLI reads transcript JSONL, sums `usage` fields from all assistant messages, posts totals to `/api/sessions/:id/usage`
+  - Subagent usage extracted from PostToolUse:Agent `tool_response` (totalTokens, totalDurationMs, usage breakdown) and shown in agent combobox
+  - New `session_usage` table stores per-session totals: input/output tokens, cache read/creation
+  - Token badge in scope bar (session-level) and sidebar (selected session), per-agent in agent combobox
+  - Real-time updates via WebSocket `usage_update` message type
 - [x] Add home page at root path showing recent sessions across all projects
   - Full stack: GET /sessions/recent API endpoint, React Query hook, HomePage component
 - [x] Switch from emojis to lucide-react icons with color coding by event category
@@ -89,9 +95,4 @@
 
 Don't implement these yet. They're here for future reference.
 
-- [ ] Track token & context window usage per session and agent
-  - On Stop hook, use two-way pattern: hook reads transcript JSONL, sums `usage` fields from all assistant messages, posts totals to `/api/sessions/:id/usage` callback
-  - Subagent usage already available in PostToolUse:Agent `tool_response` (totalTokens, totalDurationMs, usage breakdown) — just need to surface in UI
-  - Store session-level totals: total input/output tokens, cache read/creation, total duration
-  - Show in sidebar (per session) and scope bar (per agent)
-  - New `getSessionUsage` command for the two-way hook pattern
+(empty — all tasks moved to completed)

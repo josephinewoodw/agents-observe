@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { postJson } from './http.mjs'
 
 /* Array of all available callbacks */
-export const ALL_CALLBACK_HANDLERS = ['getSessionSlug']
+export const ALL_CALLBACK_HANDLERS = ['getSessionSlug', 'getSessionUsage']
 
 /* Callbacks are functions invoked by the server via requests in API server response */
 const callbackHandlers = {
@@ -41,6 +41,60 @@ const callbackHandlers = {
     }
     log.debug(`getSessionSlug: no slug found in ${transcript_path}`)
     return null
+  },
+
+  /**
+   * Reads through a transcript JSONL file and sums usage fields from all
+   * assistant messages to produce session-level token totals.
+   */
+  getSessionUsage({ transcript_path }, { log }) {
+    if (!transcript_path) {
+      log.debug('getSessionUsage: no transcript_path provided')
+      return null
+    }
+    let content
+    try {
+      content = readFileSync(transcript_path, 'utf8')
+    } catch (err) {
+      log.warn(`getSessionUsage: cannot read transcript ${transcript_path}: ${err.message}`)
+      return null
+    }
+
+    let inputTokens = 0
+    let outputTokens = 0
+    let cacheReadTokens = 0
+    let cacheCreationTokens = 0
+
+    let pos = 0
+    while (pos < content.length) {
+      const nextNewline = content.indexOf('\n', pos)
+      const end = nextNewline === -1 ? content.length : nextNewline
+      const line = content.slice(pos, end).trim()
+      pos = end + 1
+      if (!line || !line.includes('"usage"')) continue
+      try {
+        const entry = JSON.parse(line)
+        // Assistant messages have usage in message.usage
+        const usage = entry?.message?.usage || entry?.usage
+        if (usage) {
+          inputTokens += usage.input_tokens || 0
+          outputTokens += usage.output_tokens || 0
+          cacheReadTokens += usage.cache_read_input_tokens || 0
+          cacheCreationTokens += usage.cache_creation_input_tokens || 0
+        }
+      } catch {
+        continue
+      }
+    }
+
+    const totalTokens = inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens
+    if (totalTokens === 0) {
+      log.debug(`getSessionUsage: no usage data found in ${transcript_path}`)
+      return null
+    }
+
+    log.debug(`getSessionUsage: in=${inputTokens} out=${outputTokens} cache_read=${cacheReadTokens} cache_create=${cacheCreationTokens}`)
+    return { inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens }
   },
 }
 
