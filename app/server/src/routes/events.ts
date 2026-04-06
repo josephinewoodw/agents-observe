@@ -131,6 +131,34 @@ router.post('/events', async (c) => {
       if (agentType && parsed.toolUseId) {
         pendingAgentTypes.set(parsed.toolUseId, agentType)
       }
+
+      // Auto-create a task for the spawned agent
+      const toolInput = (hookPayload as any)?.tool_input
+      const taskAgentType = agentType || toolInput?.name || 'unknown'
+      const taskTitle = toolInput?.description
+        ? toolInput.description.slice(0, 100)
+        : toolInput?.prompt
+          ? toolInput.prompt.slice(0, 80)
+          : 'Task assigned'
+      const taskDescription = toolInput?.prompt ? toolInput.prompt.slice(0, 500) : null
+      const knownAgents = ['fern', 'scout', 'reed', 'sentinel', 'timber']
+      const resolvedAgent = knownAgents.includes(taskAgentType?.toLowerCase())
+        ? taskAgentType.toLowerCase()
+        : 'fern'
+      try {
+        await store.createTask({
+          agentName: resolvedAgent,
+          title: taskTitle,
+          description: taskDescription,
+          priority: 0,
+          toolUseId: parsed.toolUseId || null,
+        })
+        if (broadcastToAll) {
+          broadcastToAll({ type: 'task_created', data: { agentName: resolvedAgent, title: taskTitle } })
+        }
+      } catch {
+        // Non-fatal — task creation failure should not block event processing
+      }
     }
 
     // If the event has an ownerAgentId (from payload.agent_id), this event
@@ -192,6 +220,13 @@ router.post('/events', async (c) => {
           ?? toolResponse?.subagent_type
           ?? subAgentType
         pendingAgentTypes.delete(parsed.toolUseId)
+
+        // Mark the task as completed when the Agent tool call finishes
+        try {
+          await store.updateTaskByToolUseId(parsed.toolUseId, 'completed')
+        } catch {
+          // Non-fatal
+        }
       }
 
       await store.upsertAgent(

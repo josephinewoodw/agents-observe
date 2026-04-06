@@ -89,6 +89,21 @@ export class SqliteAdapter implements EventStore {
       )
     `)
 
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS agent_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_name TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'queued',
+        priority INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        started_at INTEGER,
+        completed_at INTEGER,
+        tool_use_id TEXT
+      )
+    `)
+
     // Create indexes
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_projects_slug ON projects(slug)')
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_projects_transcript_path ON projects(transcript_path)')
@@ -516,6 +531,103 @@ export class SqliteAdapter implements EventStore {
     return this.db
       .prepare(`SELECT * FROM session_usage WHERE session_id IN (${placeholders})`)
       .all(...sessionIds)
+  }
+
+  async createTask(params: {
+    agentName: string
+    title: string
+    description?: string | null
+    priority?: number
+    toolUseId?: string | null
+  }): Promise<number> {
+    const now = Date.now()
+    const result = this.db
+      .prepare(
+        `INSERT INTO agent_tasks (agent_name, title, description, status, priority, created_at, tool_use_id)
+         VALUES (?, ?, ?, 'queued', ?, ?, ?)`,
+      )
+      .run(params.agentName, params.title, params.description ?? null, params.priority ?? 0, now, params.toolUseId ?? null)
+    return result.lastInsertRowid as number
+  }
+
+  async getTasksForAgent(agentName: string, limit: number = 20): Promise<any[]> {
+    return this.db
+      .prepare(
+        `SELECT * FROM agent_tasks
+         WHERE agent_name = ?
+         ORDER BY
+           CASE status
+             WHEN 'active' THEN 0
+             WHEN 'queued' THEN 1
+             WHEN 'completed' THEN 2
+             WHEN 'failed' THEN 3
+             ELSE 4
+           END,
+           priority DESC,
+           created_at DESC
+         LIMIT ?`,
+      )
+      .all(agentName, limit)
+  }
+
+  async getAllTasks(limit: number = 50): Promise<any[]> {
+    return this.db
+      .prepare(
+        `SELECT * FROM agent_tasks
+         ORDER BY
+           CASE status
+             WHEN 'active' THEN 0
+             WHEN 'queued' THEN 1
+             WHEN 'completed' THEN 2
+             WHEN 'failed' THEN 3
+             ELSE 4
+           END,
+           priority DESC,
+           created_at DESC
+         LIMIT ?`,
+      )
+      .all(limit)
+  }
+
+  async updateTaskStatus(
+    id: number,
+    status: 'queued' | 'active' | 'completed' | 'failed',
+  ): Promise<void> {
+    const now = Date.now()
+    const startedAt = status === 'active' ? now : null
+    const completedAt = status === 'completed' || status === 'failed' ? now : null
+
+    if (status === 'active') {
+      this.db
+        .prepare(`UPDATE agent_tasks SET status = ?, started_at = ? WHERE id = ?`)
+        .run(status, startedAt, id)
+    } else if (status === 'completed' || status === 'failed') {
+      this.db
+        .prepare(`UPDATE agent_tasks SET status = ?, completed_at = ? WHERE id = ?`)
+        .run(status, completedAt, id)
+    } else {
+      this.db.prepare(`UPDATE agent_tasks SET status = ? WHERE id = ?`).run(status, id)
+    }
+  }
+
+  async updateTaskByToolUseId(
+    toolUseId: string,
+    status: 'active' | 'completed' | 'failed',
+  ): Promise<void> {
+    const now = Date.now()
+    if (status === 'active') {
+      this.db
+        .prepare(`UPDATE agent_tasks SET status = ?, started_at = ? WHERE tool_use_id = ? AND status = 'queued'`)
+        .run(status, now, toolUseId)
+    } else {
+      this.db
+        .prepare(`UPDATE agent_tasks SET status = ?, completed_at = ? WHERE tool_use_id = ?`)
+        .run(status, now, toolUseId)
+    }
+  }
+
+  async getTaskById(id: number): Promise<any | null> {
+    return this.db.prepare(`SELECT * FROM agent_tasks WHERE id = ?`).get(id) || null
   }
 
   async healthCheck(): Promise<{ ok: boolean; error?: string }> {

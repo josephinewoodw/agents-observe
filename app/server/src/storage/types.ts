@@ -89,4 +89,18 @@ export interface EventStore {
   getSessionUsage(sessionId: string): Promise<any | null>
   getUsageForSessions(sessionIds: string[]): Promise<any[]>
   healthCheck(): Promise<{ ok: boolean; error?: string }>
+
+  // Agent tasks
+  createTask(params: {
+    agentName: string
+    title: string
+    description?: string | null
+    priority?: number
+    toolUseId?: string | null
+  }): Promise<number>
+  getTasksForAgent(agentName: string, limit?: number): Promise<any[]>
+  getAllTasks(limit?: number): Promise<any[]>
+  updateTaskStatus(id: number, status: 'queued' | 'active' | 'completed' | 'failed'): Promise<void>
+  updateTaskByToolUseId(toolUseId: string, status: 'active' | 'completed' | 'failed'): Promise<void>
+  getTaskById(id: number): Promise<any | null>
 }

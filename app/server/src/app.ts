@@ -16,6 +16,7 @@ import healthRouter from './routes/health'
 import consumerRouter from './routes/consumer'
 import operationalRouter from './routes/operational'
 import statsRouter from './routes/stats'
+import tasksRouter from './routes/tasks'
 
 type Env = {
   Variables: {
@@ -51,6 +52,7 @@ export function createApp(
   app.route('/api', consumerRouter)
   app.route('/api', operationalRouter)
   app.route('/api', statsRouter)
+  app.route('/api', tasksRouter)
 
   // Serve built client static files when clientDistPath is configured
   const clientDistPath = config.clientDistPath
