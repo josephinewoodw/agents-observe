@@ -243,4 +243,61 @@ router.get('/stats', (c) => {
   })
 })
 
+// GET /stats/live — live token totals from session_usage table
+// This reflects data from the getSessionUsage transcript callback,
+// which fires on every Stop event. Much more real-time than stats-cache.json.
+router.get('/stats/live', (c) => {
+  try {
+    const db = new Database(config.dbPath, { readonly: true })
+
+    // Today's sessions started since midnight UTC
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayMs = todayStart.getTime()
+
+    // Sum usage across all sessions that were active today
+    const row = db.prepare(`
+      SELECT
+        COALESCE(SUM(su.input_tokens), 0) as input_tokens,
+        COALESCE(SUM(su.output_tokens), 0) as output_tokens,
+        COALESCE(SUM(su.cache_read_tokens), 0) as cache_read_tokens,
+        COALESCE(SUM(su.cache_creation_tokens), 0) as cache_creation_tokens,
+        COALESCE(SUM(su.total_cost_usd), 0) as total_cost_usd,
+        COUNT(su.session_id) as session_count,
+        MAX(su.updated_at) as last_updated
+      FROM session_usage su
+      JOIN sessions s ON s.id = su.session_id
+      WHERE s.started_at >= ?
+    `).get(todayMs) as {
+      input_tokens: number
+      output_tokens: number
+      cache_read_tokens: number
+      cache_creation_tokens: number
+      total_cost_usd: number
+      session_count: number
+      last_updated: number | null
+    }
+
+    db.close()
+
+    const totalTokens = (row?.input_tokens || 0)
+      + (row?.output_tokens || 0)
+      + (row?.cache_read_tokens || 0)
+      + (row?.cache_creation_tokens || 0)
+
+    return c.json({
+      inputTokens: row?.input_tokens || 0,
+      outputTokens: row?.output_tokens || 0,
+      cacheReadTokens: row?.cache_read_tokens || 0,
+      cacheCreationTokens: row?.cache_creation_tokens || 0,
+      totalTokens,
+      totalCostUsd: row?.total_cost_usd || 0,
+      sessionCount: row?.session_count || 0,
+      lastUpdated: row?.last_updated || null,
+    })
+  } catch (err: any) {
+    return c.json({ error: err.message || 'Failed to query live stats' }, 500)
+  }
+})
+
 export default router
