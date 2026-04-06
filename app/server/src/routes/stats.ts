@@ -85,15 +85,16 @@ function categorize(toolName: string | null): string {
 function resolveAgentType(agentType: string | null, name: string | null): string {
   if (agentType) {
     const lower = agentType.toLowerCase()
-    if (['fern', 'scout', 'reed', 'sentinel', 'timber'].includes(lower)) return lower
+    if (['fern', 'scout', 'reed', 'sentinel', 'timber', 'tide'].includes(lower)) return lower
   }
   if (name) {
     const lower = name.toLowerCase()
-    if (['fern', 'scout', 'reed', 'sentinel', 'timber'].includes(lower)) return lower
+    if (['fern', 'scout', 'reed', 'sentinel', 'timber', 'tide'].includes(lower)) return lower
     if (lower.includes('scout')) return 'scout'
     if (lower.includes('reed')) return 'reed'
     if (lower.includes('sentinel')) return 'sentinel'
     if (lower.includes('timber')) return 'timber'
+    if (lower.includes('tide')) return 'tide'
   }
   return 'fern' // default root agent → fern
 }
@@ -179,7 +180,7 @@ router.get('/stats', (c) => {
 
   // ── Heatmap: agent × task category tool call counts ──
   // Query from observe.db directly
-  const AGENTS = ['fern', 'scout', 'reed', 'sentinel', 'timber']
+  const AGENTS = ['fern', 'scout', 'reed', 'sentinel', 'timber', 'tide']
   const CATEGORIES = ['files', 'exec', 'search', 'content', 'agents', 'notify', 'planning', 'other']
   const heatmap: Record<string, Record<string, number>> = {}
   for (const agent of AGENTS) {

@@ -141,7 +141,7 @@ router.post('/events', async (c) => {
           ? toolInput.prompt.slice(0, 80)
           : 'Task assigned'
       const taskDescription = toolInput?.prompt ? toolInput.prompt.slice(0, 500) : null
-      const knownAgents = ['fern', 'scout', 'reed', 'sentinel', 'timber']
+      const knownAgents = ['fern', 'scout', 'reed', 'sentinel', 'timber', 'tide']
       const resolvedAgent = knownAgents.includes(taskAgentType?.toLowerCase())
         ? taskAgentType.toLowerCase()
         : 'fern'
@@ -221,11 +221,29 @@ router.post('/events', async (c) => {
           ?? subAgentType
         pendingAgentTypes.delete(parsed.toolUseId)
 
-        // Mark the task as completed when the Agent tool call finishes
-        try {
-          await store.updateTaskByToolUseId(parsed.toolUseId, 'completed')
-        } catch {
-          // Non-fatal
+        // Mark the task as completed when the Agent tool call finishes —
+        // but NOT for background launches, which fire PostToolUse immediately
+        // as a launch confirmation while the subagent is still running.
+        const toolResponseForTask = (hookPayload as any)?.tool_response
+        const toolInputForTask = (hookPayload as any)?.tool_input
+        const isAsyncLaunch = toolResponseForTask?.isAsync === true
+          || toolResponseForTask?.status === 'async_launched'
+          || toolInputForTask?.run_in_background === true
+        if (isAsyncLaunch) {
+          // Background launch: mark the task as active so it shows as in-progress
+          // rather than stuck in "queued". It will stay active until manually cleared
+          // or until a future mechanism notifies agents-observe of completion.
+          try {
+            await store.updateTaskByToolUseId(parsed.toolUseId, 'active')
+          } catch {
+            // Non-fatal
+          }
+        } else {
+          try {
+            await store.updateTaskByToolUseId(parsed.toolUseId, 'completed')
+          } catch {
+            // Non-fatal
+          }
         }
       }
 
