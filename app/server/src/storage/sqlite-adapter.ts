@@ -561,7 +561,8 @@ export class SqliteAdapter implements EventStore {
              WHEN 'queued' THEN 1
              WHEN 'completed' THEN 2
              WHEN 'failed' THEN 3
-             ELSE 4
+             WHEN 'stale' THEN 4
+             ELSE 5
            END,
            priority DESC,
            created_at DESC
@@ -580,7 +581,8 @@ export class SqliteAdapter implements EventStore {
              WHEN 'queued' THEN 1
              WHEN 'completed' THEN 2
              WHEN 'failed' THEN 3
-             ELSE 4
+             WHEN 'stale' THEN 4
+             ELSE 5
            END,
            priority DESC,
            created_at DESC
@@ -591,7 +593,7 @@ export class SqliteAdapter implements EventStore {
 
   async updateTaskStatus(
     id: number,
-    status: 'queued' | 'active' | 'completed' | 'failed',
+    status: 'queued' | 'active' | 'completed' | 'failed' | 'stale',
   ): Promise<void> {
     const now = Date.now()
     const startedAt = status === 'active' ? now : null
@@ -628,6 +630,25 @@ export class SqliteAdapter implements EventStore {
 
   async getTaskById(id: number): Promise<any | null> {
     return this.db.prepare(`SELECT * FROM agent_tasks WHERE id = ?`).get(id) || null
+  }
+
+  /**
+   * Mark all active/queued tasks as stale. Called on server startup to clean up
+   * tasks that were left open when the previous session crashed or was killed.
+   * Returns the number of tasks marked stale.
+   */
+  async markStaleTasksOnStartup(): Promise<number> {
+    const result = this.db
+      .prepare(
+        `UPDATE agent_tasks SET status = 'stale', completed_at = ?
+         WHERE status IN ('active', 'queued')`,
+      )
+      .run(Date.now())
+    const count = result.changes
+    if (count > 0) {
+      console.log(`[startup] Marked ${count} stale task(s) from previous sessions`)
+    }
+    return count
   }
 
   async healthCheck(): Promise<{ ok: boolean; error?: string }> {

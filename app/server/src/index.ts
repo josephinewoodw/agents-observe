@@ -10,6 +10,13 @@ import { startConsumerSweep } from './consumer-tracker'
 const store = createStore()
 const PORT = config.port
 
+// Mark any tasks left open from a previous session/crash as stale.
+// This runs before the server accepts connections so the initial GET /api/tasks
+// already returns clean state.
+store.markStaleTasksOnStartup().catch((err) => {
+  console.warn('[startup] Failed to mark stale tasks:', err)
+})
+
 const app = createApp(store, broadcastToSession, broadcastToAll)
 
 function start(retries = 3) {

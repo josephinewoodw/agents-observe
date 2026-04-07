@@ -269,6 +269,17 @@ router.post('/events', async (c) => {
         type: 'session_update',
         data: { id: parsed.sessionId, status: 'stopped' },
       })
+    } else if (parsed.subtype === 'SessionStart') {
+      // A new session is starting. Mark any active/queued tasks as stale so they
+      // don't persist into the new session's display.
+      try {
+        const staleCount = await store.markStaleTasksOnStartup()
+        if (staleCount > 0) {
+          broadcastToAll({ type: 'tasks_staled', data: { count: staleCount } })
+        }
+      } catch {
+        // Non-fatal
+      }
     } else {
       const session = await store.getSessionById(parsed.sessionId)
       if (session && session.status === 'stopped') {
